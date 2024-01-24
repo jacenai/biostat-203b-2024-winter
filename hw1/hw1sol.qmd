@@ -23,7 +23,7 @@ knitr:
 
 Display machine information for reproducibility:
 ```{r}
-#| eval: false
+#| eval: true
 sessionInfo()
 ```
 
@@ -40,6 +40,8 @@ sessionInfo()
 4. After each homework due date, course reader and instructor will check out your `main` branch for grading. Tag each of your homework submissions with tag names `hw1`, `hw2`, ... Tagging time will be used as your submission time. That means if you tag your `hw1` submission after deadline, penalty points will be deducted for late submission.
 
 5. After this course, you can make this repository public and use it to demonstrate your skill sets on job market.
+
+**Answer:** I applied for the Student Developer Pack at GitHub using my UCLA email. I created a private repository `biostat-203b-2024-winter` and added `Hua-Zhou` and TA `Tomoki-Okuno` as my collaborators with write permission. The top directories of the repository are `hw1`. I maintain two branches `main` and `develop`. All code and extra data sets to reproduce results are in the `main` branch. And I have read all the instructions carefully.
 
 ## Q2. Data ethics training
 
@@ -66,7 +68,22 @@ ls -l ~/mimic/
 
 2. Display the contents in the folders `hosp` and `icu` using Bash command `ls -l`. Why are these data files distributed as `.csv.gz` files instead of `.csv` (comma separated values) files? Read the page <https://mimic.mit.edu/docs/iv/> to understand what's in each folder.
 
+**Answer:**
+```{bash}
+ls -l ~/mimic/hosp
+```
+```{bash}
+ls -l ~/mimic/icu
+```
+The reason for why these data files are distributed as `.csv.gz` files instead of `.csv` files is: the `.csv.gz` indicates that the file is compressed using gzip compression. It used compressed files rather than the `.csv` files is because the data set contains comprehensive information for each patient while they were in the hospital, so it would need huge storage space if not compressed. Compression reduces the file size, making it quicker to download and transfer and requiring less bandwidth when downloading, which can be important for users with limited internet bandwidth.
+
 3. Briefly describe what Bash commands `zcat`, `zless`, `zmore`, and `zgrep` do.
+
+**Answer:** 
+`zcat` is used to display the content of one or more compressed files on the standard output. 
+`zless` is used to view the contents of a compressed file one page at a time. It provides a convenient way to scroll through the contents of a compressed file. 
+`zmore` is similar to `zless` and serves as a pager for compressed files and is used to view the contents of a compressed file one page at a time. It primarily supports forward navigation through the content. 
+`zgrep` is used to search for a pattern within one or more compressed files.
 
 4. (Looping in Bash) What's the output of the following bash script?
 ```{bash}
@@ -78,11 +95,100 @@ done
 ```
 Display the number of lines in each data file using a similar loop. (Hint: combine linux commands `zcat <` and `wc -l`.)
 
+**Answer:**
+```{bash}
+for datafile in ~/mimic/hosp/{a,l,pa}*.gz
+do
+  echo "Number of lines in $datafile: $(zcat < $datafile | wc -l)"
+done
+```
+
 5. Display the first few lines of `admissions.csv.gz`. How many rows are in this data file? How many unique patients (identified by `subject_id`) are in this data file? Do they match the number of patients listed in the `patients.csv.gz` file? (Hint: combine Linux commands `zcat <`, `head`/`tail`, `awk`, `sort`, `uniq`, `wc`, and so on.)
+
+**Answer:**
+Display the first few lines of admissions.csv.gz
+```{bash}
+zcat < ~/mimic/hosp/admissions.csv.gz | head -10
+```
+
+```{bash}
+#Count the number of rows in admissions.csv.gz
+row_count=$(zcat < ~/mimic/hosp/admissions.csv.gz | wc -l)
+echo "Number of rows in admissions.csv.gz: $row_count"
+```
+
+
+```{bash}
+#Extract unique patient IDs (subject_id)
+unique_patients=$(zcat < ~/mimic/hosp/admissions.csv.gz | awk -F, 'NR > 1 {print $2}' | sort -u)
+echo "Number of unique patients in admissions.csv.gz: $(echo "$unique_patients" | wc -l)"
+```
+
+Therefore, the number of patients listed in the `patients.csv.gz` file matches the number of unique patients in the `admissions.csv.gz` file.
 
 6. What are the possible values taken by each of the variable `admission_type`, `admission_location`, `insurance`, and `ethnicity`? Also report the count for each unique value of these variables. (Hint: combine Linux commands `zcat`, `head`/`tail`, `awk`, `uniq -c`, `wc`, and so on; skip the header line.)
 
+**Answer:**
+```{bash}
+#Getting to know the variables names
+zcat < ~/mimic/hosp/admissions.csv.gz | head -n 1
+```
+
+```{bash}
+#possible values taken by the variable `admission_type` and its count
+zcat < ~/mimic/hosp/admissions.csv.gz | awk -F',' 'NR > 1 {print $6}' | sort | uniq -c
+```
+
+```{bash}
+#possible values taken by the variable `admission_location` and its count
+zcat < ~/mimic/hosp/admissions.csv.gz | awk -F',' 'NR > 1 {print $8}' | sort | uniq -c
+```
+
+```{bash}
+#possible values taken by the variable `insurance` and its count
+zcat < ~/mimic/hosp/admissions.csv.gz | awk -F',' 'NR > 1 {print $10}' | sort | uniq -c
+```
+```{bash}
+#possible values taken by the variable `race` and its count
+zcat < ~/mimic/hosp/admissions.csv.gz | awk -F',' 'NR > 1 {print $13}' | sort | uniq -c
+```
+
 7. _To compress, or not to compress. That's the question._ Let's focus on the big data file `labevents.csv.gz`. Compare compressed gz file size to the uncompressed file size. Compare the run times of `zcat < ~/mimic/labevents.csv.gz | wc -l` versus `wc -l labevents.csv`. Discuss the trade off between storage and speed for big data files. (Hint: `gzip -dk < FILENAME.gz > ./FILENAME`. Remember to delete the large `labevents.csv` file after the exercise.)
+
+**Answer:**
+1)
+```{bash}
+#compare the file sizes
+#compressed file size
+ls -lh ~/mimic/hosp/labevents.csv.gz
+
+#decompress the file 
+gzip -dk < ~/mimic/hosp/labevents.csv.gz > ~/mimic/hosp/labevents.csv
+#uncompressed file size
+ls -lh ~/mimic/hosp/labevents.csv
+
+```
+The compressed file size is 1.8G and the uncompressed file size is 13G. The uncompressed file size is more than 7 times larger than the compressed file size. 
+2)
+```{bash}
+#compare the run times
+#run time of zcat on the compressed file
+time zcat < ~/mimic/hosp/labevents.csv.gz | wc -l
+
+#run time of wc on the uncompressed file
+time wc -l ~/mimic/hosp/labevents.csv
+
+```
+The run time of zcat on the compressed file is 18.82s and the run time of wc on the uncompressed file is 8.142s. 
+
+3) Trade-off between Storage and Speed: Compressed files save storage space but may require additional time for decompression during access. Uncompressed files provide faster access but consume more storage space. If storage space is a critical concern and access speed can be tolerated, compression is beneficial. However, if rapid access is crucial and storage space is not a limiting factor, using uncompressed files might be preferred.
+
+4)
+```{bash}
+# Remove the large uncompressed file
+rm ~/mimic/hosp/labevents.csv
+```
+
 
 ## Q4. Who's popular in Price and Prejudice
 
