@@ -52,6 +52,7 @@ This exercise (and later in this course) uses the [MIMIC-IV data v2.2](https://p
 ## Q3. Linux Shell Commands
 
 1. Make the MIMIC v2.2 data available at location `~/mimic`. 
+
 ```{bash}
 #| eval: false
 ls -l ~/mimic/
@@ -60,7 +61,7 @@ Refer to the documentation <https://physionet.org/content/mimiciv/2.2/> for deta
 
   Use Bash commands to answer following questions.
 
-**Answer:** I downloaded the MIMIC-IV v2.2 data to my local machine and put them in the directory `~/mimic`. The data files are available at `~/mimic`. The data files are not put into Git. The data files are not copied into my directory. The gz data files are not decompressed.
+**Answer:** I downloaded the MIMIC-IV v2.2 data to my local machine. I made a path to the original directory to MIMIC-IV v2.2 data under the path `~/mimic`. Now, the data files are available at `~/mimic`. The data files are not put into Git. The data files are not copied into my directory. The gz data files are not decompressed.
 
 ```{bash}
 ls -l ~/mimic/
@@ -69,9 +70,11 @@ ls -l ~/mimic/
 2. Display the contents in the folders `hosp` and `icu` using Bash command `ls -l`. Why are these data files distributed as `.csv.gz` files instead of `.csv` (comma separated values) files? Read the page <https://mimic.mit.edu/docs/iv/> to understand what's in each folder.
 
 **Answer:**
+This is the content of the folder `hosp`:
 ```{bash}
 ls -l ~/mimic/hosp
 ```
+This is the content of the folder `icu`:
 ```{bash}
 ls -l ~/mimic/icu
 ```
@@ -179,7 +182,7 @@ time zcat < ~/mimic/hosp/labevents.csv.gz | wc -l
 time wc -l ~/mimic/hosp/labevents.csv
 
 ```
-The run time of zcat on the compressed file is 18.82s and the run time of wc on the uncompressed file is 8.142s. 
+From the output above, overall, the run time of zcat on the compressed file is more than the run time of wc on the uncompressed file. 
 
 3) Trade-off between Storage and Speed: Compressed files save storage space but may require additional time for decompression during access. Uncompressed files provide faster access but consume more storage space. If storage space is a critical concern and access speed can be tolerated, compression is beneficial. However, if rapid access is crucial and storage space is not a limiting factor, using uncompressed files might be preferred.
 
@@ -208,6 +211,19 @@ do
 done
 ```
 
+**Answer:**
+Explanation: The `wget` command with the option `-nc` is used to download a file from the web URL, but it will not overwrite an existing file. Specifically, `wget` is the command for retrieving files from the web; `-nc` stands for `no-clobber`. It ensures that `wget` won't overwrite existing files. If the file already exists locally, `wget` will not download it again.
+
+```{bash}
+wget -nc http://www.gutenberg.org/cache/epub/42671/pg42671.txt
+for char in Elizabeth Jane Lydia Darcy
+do
+  echo "$char:"
+  grep -o -i "$char" pg42671.txt | wc -l
+done
+```
+
+
 2. What's the difference between the following two commands?
 ```{bash}
 #| eval: false
@@ -218,6 +234,10 @@ and
 #| eval: false
 echo 'hello, world' >> test2.txt
 ```
+
+
+**Answer:**
+In the first command `echo 'hello, world' > test1.txt`, `>` is used for output redirection and creates or overwrites the content of the specified file (`test1.txt`) with the output of the `echo` command. While for the second command `echo 'hello, world' >> test2.txt`, `>>` is also used for output redirection but appends the output of the `echo` command to the end of the specified file (`test2.txt`). In summary, `>` overwrites the file with new content, while `>>` appends the content to the end of the file.
 
 3. Using your favorite text editor (e.g., `vi`), type the following and save the file as `middle.sh`:
 ```{bash eval=FALSE}
@@ -233,10 +253,114 @@ Using `chmod` to make the file executable by the owner, and run
 ```
 Explain the output. Explain the meaning of `"$1"`, `"$2"`, and `"$3"` in this shell script. Why do we need the first line of the shell script?
 
+**Answer:**
+I used vi and type the command, and save the file as `middle.sh`
+
+```{bash}
+#make the middle.sh script executable 
+chmod +x middle.sh
+./middle.sh pg42671.txt 20 5
+
+```
+Output Explanation:
+The output will be the 5 lines from the middle of the file pg42671.txt, starting from line 16 and ending at line 20.
+
+Explanation of `$1`, `$2`, and `$3`:
+Since the following code gives the same output as the command `head -20 pg42671.txt | tail -5`
+```{bash}
+head -20 pg42671.txt | tail -5
+```
+I can conclude that: "$1": Represents the first command-line argument, which is the filename (pg42671.txt in this case).
+"$2": Represents the second command-line argument, which is the end line (20 in this case).
+"$3": Represents the third command-line argument, which is the number of lines (5 in this case).
+
+Purpose of (`#!/bin/sh`):
+(`#!/bin/sh`) is essential for indicating which shell interpreter should be used to execute the script. In this case, it specifies /bin/sh, which is a common location for the Bourne shell. Without this line, the script might be interpreted by a different shell, and its behavior could vary.
+
 ## Q5. More fun with Linux
 
 Try following commands in Bash and interpret the results: `cal`, `cal 2024`, `cal 9 1752` (anything unusual?), `date`, `hostname`, `arch`, `uname -a`, `uptime`, `who am i`, `who`, `w`, `id`, `last | head`, `echo {con,pre}{sent,fer}{s,ed}`, `time sleep 5`, `history | tail`.
 
+**Answer:**
+```{bash}
+cal
+```
+`cal`: displays the current month's calendar.
+```{bash}
+cal 2024
+```
+`cal 2024`: displays the calendar for the year 2024.
+```{bash}
+cal 9 1752
+```
+`cal 9 1752`: displays the calendar for September 1752. The calendar is unusual from the modern calendar because the switch from the Julian to the Gregorian calendar happened in September 1752, so the calendar missed 11 days form September 3 to September 13.
+```{bash}
+date
+```
+`date`: Prints the current date and time.
+```{bash}
+hostname
+```
+`hostname`: prints the hostname of the server that I'm currently logged into.
+```{bash}
+arch
+```
+`arch` command in Linux is used to display the architecture of the current system. It provides information about the instruction set architecture of the processor, helping users identify whether it's a 32-bit or 64-bit system. In my case, my system is running on an arm64 architecture, and it means that my processor supports 64-bit instructions. 
+```{bash}
+uname -a
+```
+`uname -a` command in Linux is used to display detailed information about the system's kernel and hardware. It provides a comprehensive set of details about the system, including the kernel name, network node hostname, kernel release, kernel version, machine hardware name, processor type, hardware platform, and the operating system. In my case, the kernel name is "Darwin," and the network node hostname is "s-169-232-81-195.resnet.ucla.edu." The kernel release, version 22.4.0, indicates the specific version of the Darwin kernel. The timestamp "Mon Mar 6 21:01:02 PST 2023" denotes when the kernel was built.
+```{bash}
+uptime
+```
+`uptime` command in Linux is used to display the current time, how long the system has been running, and information about the system's load averages. It provides a quick overview of the system's status and activity. In my case, the time "10:07" represents the current time, while "up 39 days, 13:39" indicates that the system has been running continuously for an impressive 39 days and 13 hours. The presence of "2 users" denotes that there are currently two users logged into the system. The load averages, represented as "1.73 1.88 2.18," provide insights into the system's workload over the last 1, 5, and 15 minutes, respectively.
+```{bash}
+who am i
+```
+`who am i` command in Linux is used to display information about the current user who is logged into the system. It provides details such as the username and the time the user logged in. In my case, the username is "jacenai," and the time the user logged in is "Jan 24 10:11"
+```{bash}
+who
+```
+`who` command displays information about currently logged-in users. It provides details such as the username, terminal, login time
+```{bash}
+w
+```
+`w` command displays information about the currently logged-in users and their activities. It provides a summary of user-related information, including details about each user's login session, the time they've been idle, and the commands they are currently running.
+```{bash}
+id
+```
+`id` command displays information about the user and group identities (ID) associated with the current user or a specified username.
+```{bash}
+last | head
+```
+`last` command in Linux is used to display information about previously logged-in users, including their login and logout times. When combined with the `head` command, it limits the output to the specified 10 newest lines.
+```{bash}
+echo {con,pre}{sent,fer}{s,ed}
+```
+`echo {con,pre}{sent,fer}{s,ed}` allows me to generate strings by specifying patterns enclosed in curly braces {}. The comma-separated values within the braces represent options, and this command generates all possible combinations of those options. In this case, the command generates the following strings: "consents," "conferred," "consented," "confers," "presents," "presented," "prefers," and "preferred."
+
+```{bash}
+time sleep 5
+```
+`time` command in Linux is used to measure the execution time of a given command or script, and `sleep 5` pauses the shell for a duration of five seconds. When combined, the command measures the execution time of the `sleep 5` command. 
+
+```{bash}
+history | tail
+```
+`history` command in Linux is used to display the last executed commands. When combined with the `tail` command, it limits the output to the specified 10 newest lines. In my case, since each command is executed seperately in the terminal, the output of the `history` command is empty. But I input expected output if the commands operate in line.
+
+```{bash}
+# 100  arch
+# 101  uname -a
+# 102  uptime
+# 103  who am i
+# 104  who
+# 105  w
+# 106  id
+# 107  last | head
+# 108  time sleep 5
+# 109  history | tail
+```
 ## Q6. Book
 
 1. Git clone the repository <https://github.com/christophergandrud/Rep-Res-Book> for the book _Reproducible Research with R and RStudio_ to your local machine. 
@@ -246,3 +370,14 @@ Try following commands in Bash and interpret the results: `cal`, `cal 2024`, `ca
 The point of this exercise is (1) to get the book for free and (2) to see an example how a complicated project such as a book can be organized in a reproducible way.
 
 For grading purpose, include a screenshot of Section 4.1.5 of the book here.
+
+**Answer:**
+First, I used fork to create a copy of the repository on github. Then, I used the following command to clone the repository to my local machine.
+```{bash}
+#git clone git@github.com:jacenai/Rep-Res-Book.git git@github.com:jacenai/biostat-203b-2024-winter.git
+```
+Next, I opened the project by clicking `rep-res-3rd-edition.Rproj` and compiled the book by clicking `Build Book` in the `Build` panel of RStudio, during which I downloaded a few R packages. Finally, I was able to build `git_book`. 
+The following screenshot shows the output of Section 4.1.5 of the book.
+![screenshot of Section 4.1.5](/Users/jacenai/Desktop/BIOSTAT_203B/203b-hw/hw1/Section4.1.5.png)
+
+
