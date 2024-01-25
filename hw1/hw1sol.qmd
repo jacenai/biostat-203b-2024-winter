@@ -99,6 +99,7 @@ done
 Display the number of lines in each data file using a similar loop. (Hint: combine linux commands `zcat <` and `wc -l`.)
 
 **Answer:**
+Display the number of lines in each data file using a similar loop:
 ```{bash}
 for datafile in ~/mimic/hosp/{a,l,pa}*.gz
 do
@@ -159,9 +160,8 @@ zcat < ~/mimic/hosp/admissions.csv.gz | awk -F',' 'NR > 1 {print $13}' | sort | 
 7. _To compress, or not to compress. That's the question._ Let's focus on the big data file `labevents.csv.gz`. Compare compressed gz file size to the uncompressed file size. Compare the run times of `zcat < ~/mimic/labevents.csv.gz | wc -l` versus `wc -l labevents.csv`. Discuss the trade off between storage and speed for big data files. (Hint: `gzip -dk < FILENAME.gz > ./FILENAME`. Remember to delete the large `labevents.csv` file after the exercise.)
 
 **Answer:**
-1)
+First, **comparing the file sizes:** The compressed file size is 1.8G and the uncompressed file size is 13G. The uncompressed file size is more than 7 times larger than the compressed file size. 
 ```{bash}
-#compare the file sizes
 #compressed file size
 ls -lh ~/mimic/hosp/labevents.csv.gz
 
@@ -171,10 +171,8 @@ gzip -dk < ~/mimic/hosp/labevents.csv.gz > ~/mimic/hosp/labevents.csv
 ls -lh ~/mimic/hosp/labevents.csv
 
 ```
-The compressed file size is 1.8G and the uncompressed file size is 13G. The uncompressed file size is more than 7 times larger than the compressed file size. 
-2)
+Then, **comparing the run times:** From the output below, in general, the run time of zcat on the compressed file is more than the run time of wc on the uncompressed file. 
 ```{bash}
-#compare the run times
 #run time of zcat on the compressed file
 time zcat < ~/mimic/hosp/labevents.csv.gz | wc -l
 
@@ -182,11 +180,10 @@ time zcat < ~/mimic/hosp/labevents.csv.gz | wc -l
 time wc -l ~/mimic/hosp/labevents.csv
 
 ```
-From the output above, overall, the run time of zcat on the compressed file is more than the run time of wc on the uncompressed file. 
 
-3) Trade-off between Storage and Speed: Compressed files save storage space but may require additional time for decompression during access. Uncompressed files provide faster access but consume more storage space. If storage space is a critical concern and access speed can be tolerated, compression is beneficial. However, if rapid access is crucial and storage space is not a limiting factor, using uncompressed files might be preferred.
+**Trade-off between Storage and Speed:** Compressed files save storage space but may require additional time for decompression during access. Uncompressed files provide faster access but consume more storage space. If storage space is a critical concern and access speed can be tolerated, compression is beneficial. However, if rapid access is crucial and storage space is not a limiting factor, using uncompressed files might be preferred.
 
-4)
+
 ```{bash}
 # Remove the large uncompressed file
 rm ~/mimic/hosp/labevents.csv
@@ -254,11 +251,17 @@ Using `chmod` to make the file executable by the owner, and run
 Explain the output. Explain the meaning of `"$1"`, `"$2"`, and `"$3"` in this shell script. Why do we need the first line of the shell script?
 
 **Answer:**
-I used vi and type the command, and save the file as `middle.sh`
-
+First, I used vi and type the command, and save the file as `middle.sh`
+```{bash}
+echo '#!/bin/sh' > middle.sh
+echo '# Select lines from the middle of a file.' >> middle.sh
+echo '# Usage: bash middle.sh filename end_line num_lines' >> middle.sh
+echo 'head -n "$2" "$1" | tail -n "$3"' >> middle.sh
+```
+Then, I used `chmod` to make the file executable by the owner and run the command
 ```{bash}
 #make the middle.sh script executable 
-chmod +x middle.sh
+chmod a+x middle.sh
 ./middle.sh pg42671.txt 20 5
 
 ```
