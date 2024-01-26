@@ -88,11 +88,17 @@ complete Q2 before working on the remaining questions.** (Hint: The CITI
 training takes a few hours and the PhysioNet credentialing takes a
 couple days; do not leave it to the last minute.)
 
-**Answer:** I completed the CITI training on 1/18/2021. The completion
-report is available at
+**Answer:**
+
+I completed the CITI training on 1/18/2021. The completion report is
+available at
 [here](https://www.citiprogram.org/verify/?k6b4494ee-7938-4b63-920b-1da005d66727-60622234).
 The completion certificate is available at
 [here](https://www.citiprogram.org/verify/?w2edd6762-e466-4ba4-b34d-4928a65f485d-60622234).
+
+I also obtained the PhysioNet credential for using the MIMIC-IV data.
+Here is the screenshot of my PhysioNet credentialing.![screenshot of
+Credentialing](./Credential.jpg)
 
 ## Q3. Linux Shell Commands
 
@@ -155,15 +161,22 @@ limited internet bandwidth.
 3.  Briefly describe what Bash commands `zcat`, `zless`, `zmore`, and
     `zgrep` do.
 
-**Answer:** `zcat` is used to display the content of one or more
-compressed files on the standard output. `zless` is used to view the
-contents of a compressed file one page at a time. It provides a
-convenient way to scroll through the contents of a compressed file.
-`zmore` is similar to `zless` and serves as a pager for compressed files
-and is used to view the contents of a compressed file one page at a
-time. It primarily supports forward navigation through the content.
-`zgrep` is used to search for a pattern within one or more compressed
-files.
+**Answer:**
+
+-   `zcat` is used to display the content of one or more compressed
+    files on the standard output.
+
+-   `zless` is used to view the contents of a compressed file one page
+    at a time. It provides a convenient way to scroll through the
+    contents of a compressed file.
+
+-   `zmore` is similar to `zless` and serves as a pager for compressed
+    files and is used to view the contents of a compressed file one page
+    at a time. It primarily supports forward navigation through the
+    content.
+
+-   `zgrep` is used to search for a pattern within one or more
+    compressed files.
 
 4.  (Looping in Bash) What's the output of the following bash script?
 
@@ -178,8 +191,9 @@ done
 Display the number of lines in each data file using a similar loop.
 (Hint: combine linux commands `zcat <` and `wc -l`.)
 
-**Answer:** Display the number of lines in each data file using a
-similar loop:
+**Answer:**
+
+Display the number of lines in each data file using a similar loop:
 
 ```{bash}
 for datafile in ~/mimic/hosp/{a,l,pa}*.gz
@@ -195,31 +209,35 @@ done
     commands `zcat <`, `head`/`tail`, `awk`, `sort`, `uniq`, `wc`, and
     so on.)
 
-**Answer:** Display the first few lines of admissions.csv.gz
+**Answer:**
+
+Display the first few lines of admissions.csv.gz
 
 ```{bash}
-zcat < ~/mimic/hosp/admissions.csv.gz 
-| head -10
+zcat < ~/mimic/hosp/admissions.csv.gz | head -10
 ```
 
 ```{bash}
 #Count the number of rows in admissions.csv.gz
-row_count=$(zcat < ~/mimic/hosp/admissions.csv.gz 
-| wc -l)
+row_count=$(zcat < ~/mimic/hosp/admissions.csv.gz | wc -l)
 echo "Number of rows in admissions.csv.gz: $row_count"
 ```
 
 ```{bash}
-#Extract unique patient IDs (subject_id)
-unique_patients=$(zcat < ~/mimic/hosp/admissions.csv.gz 
-| awk -F, 'NR > 1 {print $2}' 
-| sort -u)
-echo "Number of unique patients in admissions.csv.gz: $(echo "$unique_patients" 
-| wc -l)"
+#Count the number of unique patients (identified by subject_id) in admissions.csv.gz:
+subject_count=$(zcat < ~/mimic/hosp/admissions.csv.gz | awk -F ',' '{print $1}' | sort -u | wc -l)
+echo "Number of unique patients in admissions.csv.gz: $subject_count"
+```
+
+```{bash}
+#Count the number of unique patients (identified by subject_id) in patients.csv.gz:
+subject_count=$(zcat < ~/mimic/hosp/patients.csv.gz | awk -F ',' '{print $1}' | sort -u | wc -l)
+echo "Number of unique patients in patients.csv.gz: $subject_count"
 ```
 
 Therefore, the number of patients listed in the `patients.csv.gz` file
-matches the number of unique patients in the `admissions.csv.gz` file.
+doesn't match the number of unique patients in the `admissions.csv.gz`
+file.
 
 6.  What are the possible values taken by each of the variable
     `admission_type`, `admission_location`, `insurance`, and
@@ -229,28 +247,35 @@ matches the number of unique patients in the `admissions.csv.gz` file.
 
 **Answer:**
 
+First, getting to know the variables' names.
+
 ```{bash}
-#getting to know the variables' names
 zcat < ~/mimic/hosp/admissions.csv.gz | head -n 1
 ```
 
+Get possible values taken by the variable `admission_type` and its count
+
 ```{bash}
-#possible values taken by the variable `admission_type` and its count
 zcat < ~/mimic/hosp/admissions.csv.gz | awk -F',' 'NR > 1 {print $6}' | sort | uniq -c
 ```
 
+Get possible values taken by the variable `admission_location` and its
+count
+
 ```{bash}
-#possible values taken by the variable `admission_location` and its count
 zcat < ~/mimic/hosp/admissions.csv.gz | awk -F',' 'NR > 1 {print $8}' | sort | uniq -c
 ```
 
+Get possible values taken by the variable `insurance` and its count
+
 ```{bash}
-#possible values taken by the variable `insurance` and its count
 zcat < ~/mimic/hosp/admissions.csv.gz | awk -F',' 'NR > 1 {print $10}' | sort | uniq -c
 ```
 
+Get possible values taken by the variable `race`/`ethnicity` and its
+count
+
 ```{bash}
-#possible values taken by the variable `race` and its count
 zcat < ~/mimic/hosp/admissions.csv.gz | awk -F',' 'NR > 1 {print $13}' | sort | uniq -c
 ```
 
@@ -263,9 +288,11 @@ zcat < ~/mimic/hosp/admissions.csv.gz | awk -F',' 'NR > 1 {print $13}' | sort | 
     `gzip -dk < FILENAME.gz > ./FILENAME`. Remember to delete the large
     `labevents.csv` file after the exercise.)
 
-**Answer:** First, **comparing the file sizes:** The compressed file
-size is 1.8G and the uncompressed file size is 13G. The uncompressed
-file size is more than 7 times larger than the compressed file size.
+**Answer:**
+
+First, **comparing the file sizes:** The compressed file size is 1.8G
+and the uncompressed file size is 13G. The uncompressed file size is
+more than 7 times larger than the compressed file size.
 
 ```{bash}
 #compressed file size
@@ -334,12 +361,14 @@ do
 done
 ```
 
-**Answer:** Explanation: The `wget` command with the option `-nc` is
-used to download a file from the web URL, but it will not overwrite an
-existing file. Specifically, `wget` is the command for retrieving files
-from the web; `-nc` stands for `no-clobber`. It ensures that `wget`
-won't overwrite existing files. If the file already exists locally,
-`wget` will not download it again.
+**Answer:**
+
+**Explanation**: The `wget` command with the option `-nc` is used to
+download a file from the web URL, but it will not overwrite an existing
+file. Specifically, `wget` is the command for retrieving files from the
+web; `-nc` stands for `no-clobber`. It ensures that `wget` won't
+overwrite existing files. If the file already exists locally, `wget`
+will not download it again.
 
 ```{bash}
 wget -nc http://www.gutenberg.org/cache/epub/42671/pg42671.txt
@@ -349,6 +378,9 @@ do
   grep -o -i "$char" pg42671.txt | wc -l
 done
 ```
+
+The number of times each of the four characters is: Elizabeth: 634 Jane:
+293 Lydia: 171 Darcy: 418.
 
 2.  What's the difference between the following two commands?
 
@@ -364,9 +396,11 @@ and
 echo 'hello, world' >> test2.txt
 ```
 
-**Answer:** In the first command `echo 'hello, world' > test1.txt`, `>`
-is used for output redirection and creates or overwrites the content of
-the specified file (`test1.txt`) with the output of the `echo` command.
+**Answer:**
+
+In the first command `echo 'hello, world' > test1.txt`, `>` is used for
+output redirection and creates or overwrites the content of the
+specified file (`test1.txt`) with the output of the `echo` command.
 While for the second command `echo 'hello, world' >> test2.txt`, `>>` is
 also used for output redirection but appends the output of the `echo`
 command to the end of the specified file (`test2.txt`). In summary, `>`
@@ -393,8 +427,9 @@ Using `chmod` to make the file executable by the owner, and run
 Explain the output. Explain the meaning of `"$1"`, `"$2"`, and `"$3"` in
 this shell script. Why do we need the first line of the shell script?
 
-**Answer:** First, I used vi and type the command, and save the file as
-`middle.sh`
+**Answer:**
+
+First, I used vi and type the command, and save the file as `middle.sh`
 
 ```{bash}
 echo '#!/bin/sh' > middle.sh
@@ -416,8 +451,10 @@ chmod a+x middle.sh
 **Output Explanation**: The output will be the 5 lines from the middle
 of the file pg42671.txt, starting from line 16 and ending at line 20.
 
-**Explanation of `$1`, `$2`, and `$3`**: Since the following code gives
-the same output as the command `head -20 pg42671.txt | tail -5`
+**Explanation of `$1`, `$2`, and `$3`**:
+
+Since the following code gives the same output as the command
+`head -20 pg42671.txt | tail -5`
 
 ```{bash}
 head -20 pg42671.txt | tail -5
@@ -429,11 +466,13 @@ second command-line argument, which is the end line (20 in this case).
 `$3`: Represents the third command-line argument, which is the number of
 lines (5 in this case).
 
-Purpose of (`#!/bin/sh`): (`#!/bin/sh`) is essential for indicating
-which shell interpreter should be used to execute the script. In this
-case, it specifies /bin/sh, which is a common location for the Bourne
-shell. Without this line, the script might be interpreted by a different
-shell, and its behavior could vary.
+**Why do we need the first line of the shell script?** / Purpose of
+(`#!/bin/sh`):
+
+(`#!/bin/sh`) is essential for indicating which shell interpreter should
+be used to execute the script. In this case, it specifies /bin/sh, which
+is a common location for the Bourne shell. Without this line, the script
+might be interpreted by a different shell, and its behavior could vary.
 
 ## Q5. More fun with Linux
 
