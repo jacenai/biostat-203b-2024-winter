@@ -19,9 +19,13 @@ knitr:
     fig.width: 6
     fig.height: 4
     message: FALSE
+editor: 
+  markdown: 
+    wrap: 72
 ---
 
 Display machine information for reproducibility:
+
 ```{r}
 #| eval: true
 sessionInfo()
@@ -29,66 +33,140 @@ sessionInfo()
 
 ## Q1. Git/GitHub
 
-**No handwritten homework reports are accepted for this course.** We work with Git and GitHub. Efficient and abundant use of Git, e.g., frequent and well-documented commits, is an important criterion for grading your homework.
+**No handwritten homework reports are accepted for this course.** We
+work with Git and GitHub. Efficient and abundant use of Git, e.g.,
+frequent and well-documented commits, is an important criterion for
+grading your homework.
 
-1. Apply for the [Student Developer Pack](https://education.github.com/pack) at GitHub using your UCLA email. You'll get GitHub Pro account for free (unlimited public and private repositories).
+1.  Apply for the [Student Developer
+    Pack](https://education.github.com/pack) at GitHub using your UCLA
+    email. You'll get GitHub Pro account for free (unlimited public and
+    private repositories).
 
-2. Create a **private** repository `biostat-203b-2024-winter` and add `Hua-Zhou` and TA team (`Tomoki-Okuno` for Lec 1; `jonathanhori` and `jasenzhang1` for Lec 80) as your collaborators with write permission.
+2.  Create a **private** repository `biostat-203b-2024-winter` and add
+    `Hua-Zhou` and TA team (`Tomoki-Okuno` for Lec 1; `jonathanhori` and
+    `jasenzhang1` for Lec 80) as your collaborators with write
+    permission.
 
-3. Top directories of the repository should be `hw1`, `hw2`, ... Maintain two branches `main` and `develop`. The `develop` branch will be your main playground, the place where you develop solution (code) to homework problems and write up report. The `main` branch will be your presentation area. Submit your homework files (Quarto file `qmd`, `html` file converted by Quarto, all code and extra data sets to reproduce results) in the `main` branch.
+3.  Top directories of the repository should be `hw1`, `hw2`, ...
+    Maintain two branches `main` and `develop`. The `develop` branch
+    will be your main playground, the place where you develop solution
+    (code) to homework problems and write up report. The `main` branch
+    will be your presentation area. Submit your homework files (Quarto
+    file `qmd`, `html` file converted by Quarto, all code and extra data
+    sets to reproduce results) in the `main` branch.
 
-4. After each homework due date, course reader and instructor will check out your `main` branch for grading. Tag each of your homework submissions with tag names `hw1`, `hw2`, ... Tagging time will be used as your submission time. That means if you tag your `hw1` submission after deadline, penalty points will be deducted for late submission.
+4.  After each homework due date, course reader and instructor will
+    check out your `main` branch for grading. Tag each of your homework
+    submissions with tag names `hw1`, `hw2`, ... Tagging time will be
+    used as your submission time. That means if you tag your `hw1`
+    submission after deadline, penalty points will be deducted for late
+    submission.
 
-5. After this course, you can make this repository public and use it to demonstrate your skill sets on job market.
+5.  After this course, you can make this repository public and use it to
+    demonstrate your skill sets on job market.
 
-**Answer:** I applied for the Student Developer Pack at GitHub using my UCLA email. I created a private repository `biostat-203b-2024-winter` and added `Hua-Zhou` and TA `Tomoki-Okuno` as my collaborators with write permission. The top directories of the repository are `hw1`. I maintain two branches `main` and `develop`. All code and extra data sets to reproduce results are in the `main` branch. And I have read all the instructions carefully.
+**Answer:** I applied for the Student Developer Pack at GitHub using my
+UCLA email. I created a private repository `biostat-203b-2024-winter`
+and added Prof. `Hua-Zhou` and TA `Tomoki-Okuno` as my collaborators
+with write permission. The top directories of the repository are `hw1`.
+I maintain two branches `main` and `develop`. All code and extra data
+sets to reproduce results are in the `main` branch. And I have read all
+the instructions carefully.
 
 ## Q2. Data ethics training
 
-This exercise (and later in this course) uses the [MIMIC-IV data v2.2](https://physionet.org/content/mimiciv/2.2/), a freely accessible critical care database developed by the MIT Lab for Computational Physiology. Follow the instructions at <https://mimic.mit.edu/docs/gettingstarted/> to (1) complete the CITI `Data or Specimens Only Research` course and (2) obtain the PhysioNet credential for using the MIMIC-IV data. Display the verification links to your completion report and completion certificate here. **You must complete Q2 before working on the remaining questions.** (Hint: The CITI training takes a few hours and the PhysioNet credentialing takes a couple days; do not leave it to the last minute.)
+This exercise (and later in this course) uses the [MIMIC-IV data
+v2.2](https://physionet.org/content/mimiciv/2.2/), a freely accessible
+critical care database developed by the MIT Lab for Computational
+Physiology. Follow the instructions at
+<https://mimic.mit.edu/docs/gettingstarted/> to (1) complete the CITI
+`Data or Specimens Only Research` course and (2) obtain the PhysioNet
+credential for using the MIMIC-IV data. Display the verification links
+to your completion report and completion certificate here. **You must
+complete Q2 before working on the remaining questions.** (Hint: The CITI
+training takes a few hours and the PhysioNet credentialing takes a
+couple days; do not leave it to the last minute.)
 
-**Answer:** I completed the CITI training on 1/18/2021. The completion report is available at [here](https://www.citiprogram.org/verify/?k6b4494ee-7938-4b63-920b-1da005d66727-60622234). The completion certificate is available at [here](https://www.citiprogram.org/verify/?w2edd6762-e466-4ba4-b34d-4928a65f485d-60622234).
+**Answer:** I completed the CITI training on 1/18/2021. The completion
+report is available at
+[here](https://www.citiprogram.org/verify/?k6b4494ee-7938-4b63-920b-1da005d66727-60622234).
+The completion certificate is available at
+[here](https://www.citiprogram.org/verify/?w2edd6762-e466-4ba4-b34d-4928a65f485d-60622234).
 
 ## Q3. Linux Shell Commands
 
-1. Make the MIMIC v2.2 data available at location `~/mimic`. 
+1.  Make the MIMIC v2.2 data available at location `~/mimic`.
 
 ```{bash}
 #| eval: false
 ls -l ~/mimic/
 ```
-Refer to the documentation <https://physionet.org/content/mimiciv/2.2/> for details of data files. Please, do **not** put these data files into Git; they are big. Do **not** copy them into your directory. Do **not** decompress the gz data files. These create unnecessary big files and are not big-data-friendly practices. Read from the data folder `~/mimic` directly in following exercises. 
 
-  Use Bash commands to answer following questions.
+Refer to the documentation <https://physionet.org/content/mimiciv/2.2/>
+for details of data files. Please, do **not** put these data files into
+Git; they are big. Do **not** copy them into your directory. Do **not**
+decompress the gz data files. These create unnecessary big files and are
+not big-data-friendly practices. Read from the data folder `~/mimic`
+directly in following exercises.
 
-**Answer:** I downloaded the MIMIC-IV v2.2 data to my local machine. I made a path to the original directory to MIMIC-IV v2.2 data under the path `~/mimic`. Now, the data files are available at `~/mimic`. The data files are not put into Git. The data files are not copied into my directory. The gz data files are not decompressed.
+Use Bash commands to answer following questions.
+
+**Answer:** I downloaded the MIMIC-IV v2.2 data to my local machine. I
+made a path to the original directory to MIMIC-IV v2.2 data under the
+path `~/mimic` in my command panel
+(`ln -s /Users/jacenai/Desktop/BIOSTAT_203B/mimic-iv-2.2/  ~/mimic`).
+Now, the data files are available at `~/mimic`. The data files are not
+put into Git. The data files are not copied into my directory. The gz
+data files are not decompressed.
 
 ```{bash}
 ls -l ~/mimic/
 ```
 
-2. Display the contents in the folders `hosp` and `icu` using Bash command `ls -l`. Why are these data files distributed as `.csv.gz` files instead of `.csv` (comma separated values) files? Read the page <https://mimic.mit.edu/docs/iv/> to understand what's in each folder.
+2.  Display the contents in the folders `hosp` and `icu` using Bash
+    command `ls -l`. Why are these data files distributed as `.csv.gz`
+    files instead of `.csv` (comma separated values) files? Read the
+    page <https://mimic.mit.edu/docs/iv/> to understand what's in each
+    folder.
 
-**Answer:**
-This is the content of the folder `hosp`:
+**Answer:** This is the content of the folder `hosp`:
+
 ```{bash}
 ls -l ~/mimic/hosp
 ```
+
 This is the content of the folder `icu`:
+
 ```{bash}
 ls -l ~/mimic/icu
 ```
-The reason for why these data files are distributed as `.csv.gz` files instead of `.csv` files is: the `.csv.gz` indicates that the file is compressed using gzip compression. It used compressed files rather than the `.csv` files is because the data set contains comprehensive information for each patient while they were in the hospital, so it would need huge storage space if not compressed. Compression reduces the file size, making it quicker to download and transfer and requiring less bandwidth when downloading, which can be important for users with limited internet bandwidth.
 
-3. Briefly describe what Bash commands `zcat`, `zless`, `zmore`, and `zgrep` do.
+The reason for why these data files are distributed as `.csv.gz` files
+instead of `.csv` files is: the `.csv.gz` indicates that the file is
+compressed using gzip compression. It used compressed files rather than
+the `.csv` files is because the data set contains comprehensive
+information for each patient while they were in the hospital, so it
+would need huge storage space if not compressed. Compression reduces the
+file size, making it quicker to download and transfer and requiring less
+bandwidth when downloading, which can be important for users with
+limited internet bandwidth.
 
-**Answer:** 
-`zcat` is used to display the content of one or more compressed files on the standard output. 
-`zless` is used to view the contents of a compressed file one page at a time. It provides a convenient way to scroll through the contents of a compressed file. 
-`zmore` is similar to `zless` and serves as a pager for compressed files and is used to view the contents of a compressed file one page at a time. It primarily supports forward navigation through the content. 
-`zgrep` is used to search for a pattern within one or more compressed files.
+3.  Briefly describe what Bash commands `zcat`, `zless`, `zmore`, and
+    `zgrep` do.
 
-4. (Looping in Bash) What's the output of the following bash script?
+**Answer:** `zcat` is used to display the content of one or more
+compressed files on the standard output. `zless` is used to view the
+contents of a compressed file one page at a time. It provides a
+convenient way to scroll through the contents of a compressed file.
+`zmore` is similar to `zless` and serves as a pager for compressed files
+and is used to view the contents of a compressed file one page at a
+time. It primarily supports forward navigation through the content.
+`zgrep` is used to search for a pattern within one or more compressed
+files.
+
+4.  (Looping in Bash) What's the output of the following bash script?
+
 ```{bash}
 #| eval: false
 for datafile in ~/mimic/hosp/{a,l,pa}*.gz
@@ -96,10 +174,13 @@ do
   ls -l $datafile
 done
 ```
-Display the number of lines in each data file using a similar loop. (Hint: combine linux commands `zcat <` and `wc -l`.)
 
-**Answer:**
-Display the number of lines in each data file using a similar loop:
+Display the number of lines in each data file using a similar loop.
+(Hint: combine linux commands `zcat <` and `wc -l`.)
+
+**Answer:** Display the number of lines in each data file using a
+similar loop:
+
 ```{bash}
 for datafile in ~/mimic/hosp/{a,l,pa}*.gz
 do
@@ -107,34 +188,49 @@ do
 done
 ```
 
-5. Display the first few lines of `admissions.csv.gz`. How many rows are in this data file? How many unique patients (identified by `subject_id`) are in this data file? Do they match the number of patients listed in the `patients.csv.gz` file? (Hint: combine Linux commands `zcat <`, `head`/`tail`, `awk`, `sort`, `uniq`, `wc`, and so on.)
+5.  Display the first few lines of `admissions.csv.gz`. How many rows
+    are in this data file? How many unique patients (identified by
+    `subject_id`) are in this data file? Do they match the number of
+    patients listed in the `patients.csv.gz` file? (Hint: combine Linux
+    commands `zcat <`, `head`/`tail`, `awk`, `sort`, `uniq`, `wc`, and
+    so on.)
 
-**Answer:**
-Display the first few lines of admissions.csv.gz
+**Answer:** Display the first few lines of admissions.csv.gz
+
 ```{bash}
-zcat < ~/mimic/hosp/admissions.csv.gz | head -10
+zcat < ~/mimic/hosp/admissions.csv.gz 
+| head -10
 ```
 
 ```{bash}
 #Count the number of rows in admissions.csv.gz
-row_count=$(zcat < ~/mimic/hosp/admissions.csv.gz | wc -l)
+row_count=$(zcat < ~/mimic/hosp/admissions.csv.gz 
+| wc -l)
 echo "Number of rows in admissions.csv.gz: $row_count"
 ```
 
-
 ```{bash}
 #Extract unique patient IDs (subject_id)
-unique_patients=$(zcat < ~/mimic/hosp/admissions.csv.gz | awk -F, 'NR > 1 {print $2}' | sort -u)
-echo "Number of unique patients in admissions.csv.gz: $(echo "$unique_patients" | wc -l)"
+unique_patients=$(zcat < ~/mimic/hosp/admissions.csv.gz 
+| awk -F, 'NR > 1 {print $2}' 
+| sort -u)
+echo "Number of unique patients in admissions.csv.gz: $(echo "$unique_patients" 
+| wc -l)"
 ```
 
-Therefore, the number of patients listed in the `patients.csv.gz` file matches the number of unique patients in the `admissions.csv.gz` file.
+Therefore, the number of patients listed in the `patients.csv.gz` file
+matches the number of unique patients in the `admissions.csv.gz` file.
 
-6. What are the possible values taken by each of the variable `admission_type`, `admission_location`, `insurance`, and `ethnicity`? Also report the count for each unique value of these variables. (Hint: combine Linux commands `zcat`, `head`/`tail`, `awk`, `uniq -c`, `wc`, and so on; skip the header line.)
+6.  What are the possible values taken by each of the variable
+    `admission_type`, `admission_location`, `insurance`, and
+    `ethnicity`? Also report the count for each unique value of these
+    variables. (Hint: combine Linux commands `zcat`, `head`/`tail`,
+    `awk`, `uniq -c`, `wc`, and so on; skip the header line.)
 
 **Answer:**
+
 ```{bash}
-#Getting to know the variables names
+#getting to know the variables' names
 zcat < ~/mimic/hosp/admissions.csv.gz | head -n 1
 ```
 
@@ -152,26 +248,41 @@ zcat < ~/mimic/hosp/admissions.csv.gz | awk -F',' 'NR > 1 {print $8}' | sort | u
 #possible values taken by the variable `insurance` and its count
 zcat < ~/mimic/hosp/admissions.csv.gz | awk -F',' 'NR > 1 {print $10}' | sort | uniq -c
 ```
+
 ```{bash}
 #possible values taken by the variable `race` and its count
 zcat < ~/mimic/hosp/admissions.csv.gz | awk -F',' 'NR > 1 {print $13}' | sort | uniq -c
 ```
 
-7. _To compress, or not to compress. That's the question._ Let's focus on the big data file `labevents.csv.gz`. Compare compressed gz file size to the uncompressed file size. Compare the run times of `zcat < ~/mimic/labevents.csv.gz | wc -l` versus `wc -l labevents.csv`. Discuss the trade off between storage and speed for big data files. (Hint: `gzip -dk < FILENAME.gz > ./FILENAME`. Remember to delete the large `labevents.csv` file after the exercise.)
+7.  *To compress, or not to compress. That's the question.* Let's focus
+    on the big data file `labevents.csv.gz`. Compare compressed gz file
+    size to the uncompressed file size. Compare the run times of
+    `zcat < ~/mimic/labevents.csv.gz | wc -l` versus
+    `wc -l labevents.csv`. Discuss the trade off between storage and
+    speed for big data files. (Hint:
+    `gzip -dk < FILENAME.gz > ./FILENAME`. Remember to delete the large
+    `labevents.csv` file after the exercise.)
 
-**Answer:**
-First, **comparing the file sizes:** The compressed file size is 1.8G and the uncompressed file size is 13G. The uncompressed file size is more than 7 times larger than the compressed file size. 
+**Answer:** First, **comparing the file sizes:** The compressed file
+size is 1.8G and the uncompressed file size is 13G. The uncompressed
+file size is more than 7 times larger than the compressed file size.
+
 ```{bash}
 #compressed file size
 ls -lh ~/mimic/hosp/labevents.csv.gz
 
 #decompress the file 
 gzip -dk < ~/mimic/hosp/labevents.csv.gz > ~/mimic/hosp/labevents.csv
+
 #uncompressed file size
 ls -lh ~/mimic/hosp/labevents.csv
 
 ```
-Then, **comparing the run times:** From the output below, in general, the run time of zcat on the compressed file is more than the run time of wc on the uncompressed file. 
+
+Then, **comparing the run times:** From the output below, in general,
+the run time of `zcat` on the compressed file is more than the run time
+of `wc` on the uncompressed file.
+
 ```{bash}
 #run time of zcat on the compressed file
 time zcat < ~/mimic/hosp/labevents.csv.gz | wc -l
@@ -181,23 +292,38 @@ time wc -l ~/mimic/hosp/labevents.csv
 
 ```
 
-**Trade-off between Storage and Speed:** Compressed files save storage space but may require additional time for decompression during access. Uncompressed files provide faster access but consume more storage space. If storage space is a critical concern and access speed can be tolerated, compression is beneficial. However, if rapid access is crucial and storage space is not a limiting factor, using uncompressed files might be preferred.
-
+**Trade-off between storage and speed:** compressed files save storage
+space but may require additional time for decompression during access.
+Uncompressed files provide faster access but consume more storage space.
+If storage space is a critical concern and access speed can be
+tolerated, compression is beneficial. However, if rapid access is
+crucial and storage space is not a limiting factor, using uncompressed
+files might be preferred.
 
 ```{bash}
-# Remove the large uncompressed file
+# remove the large uncompressed file
 rm ~/mimic/hosp/labevents.csv
 ```
 
-
 ## Q4. Who's popular in Price and Prejudice
 
-1. You and your friend just have finished reading *Pride and Prejudice* by Jane Austen. Among the four main characters in the book, Elizabeth, Jane, Lydia, and Darcy, your friend thinks that Darcy was the most mentioned. You, however, are certain it was Elizabeth. Obtain the full text of the novel from <http://www.gutenberg.org/cache/epub/42671/pg42671.txt> and save to your local folder. 
+1.  You and your friend just have finished reading *Pride and Prejudice*
+    by Jane Austen. Among the four main characters in the book,
+    Elizabeth, Jane, Lydia, and Darcy, your friend thinks that Darcy was
+    the most mentioned. You, however, are certain it was Elizabeth.
+    Obtain the full text of the novel from
+    <http://www.gutenberg.org/cache/epub/42671/pg42671.txt> and save to
+    your local folder.
+
 ```{bash}
 #| eval: false
 wget -nc http://www.gutenberg.org/cache/epub/42671/pg42671.txt
 ```
-Explain what `wget -nc` does. Do **not** put this text file `pg42671.txt` in Git. Complete the following loop to tabulate the number of times each of the four characters is mentioned using Linux commands.
+
+Explain what `wget -nc` does. Do **not** put this text file
+`pg42671.txt` in Git. Complete the following loop to tabulate the number
+of times each of the four characters is mentioned using Linux commands.
+
 ```{bash}
 #| eval: false
 wget -nc http://www.gutenberg.org/cache/epub/42671/pg42671.txt
@@ -208,8 +334,12 @@ do
 done
 ```
 
-**Answer:**
-Explanation: The `wget` command with the option `-nc` is used to download a file from the web URL, but it will not overwrite an existing file. Specifically, `wget` is the command for retrieving files from the web; `-nc` stands for `no-clobber`. It ensures that `wget` won't overwrite existing files. If the file already exists locally, `wget` will not download it again.
+**Answer:** Explanation: The `wget` command with the option `-nc` is
+used to download a file from the web URL, but it will not overwrite an
+existing file. Specifically, `wget` is the command for retrieving files
+from the web; `-nc` stands for `no-clobber`. It ensures that `wget`
+won't overwrite existing files. If the file already exists locally,
+`wget` will not download it again.
 
 ```{bash}
 wget -nc http://www.gutenberg.org/cache/epub/42671/pg42671.txt
@@ -220,137 +350,245 @@ do
 done
 ```
 
+2.  What's the difference between the following two commands?
 
-2. What's the difference between the following two commands?
 ```{bash}
 #| eval: false
 echo 'hello, world' > test1.txt
 ```
+
 and
+
 ```{bash}
 #| eval: false
 echo 'hello, world' >> test2.txt
 ```
 
+**Answer:** In the first command `echo 'hello, world' > test1.txt`, `>`
+is used for output redirection and creates or overwrites the content of
+the specified file (`test1.txt`) with the output of the `echo` command.
+While for the second command `echo 'hello, world' >> test2.txt`, `>>` is
+also used for output redirection but appends the output of the `echo`
+command to the end of the specified file (`test2.txt`). In summary, `>`
+overwrites the file with new content, while `>>` appends the content to
+the end of the file.
 
-**Answer:**
-In the first command `echo 'hello, world' > test1.txt`, `>` is used for output redirection and creates or overwrites the content of the specified file (`test1.txt`) with the output of the `echo` command. While for the second command `echo 'hello, world' >> test2.txt`, `>>` is also used for output redirection but appends the output of the `echo` command to the end of the specified file (`test2.txt`). In summary, `>` overwrites the file with new content, while `>>` appends the content to the end of the file.
+3.  Using your favorite text editor (e.g., `vi`), type the following and
+    save the file as `middle.sh`:
 
-3. Using your favorite text editor (e.g., `vi`), type the following and save the file as `middle.sh`:
 ```{bash eval=FALSE}
 #!/bin/sh
 # Select lines from the middle of a file.
 # Usage: bash middle.sh filename end_line num_lines
 head -n "$2" "$1" | tail -n "$3"
 ```
+
 Using `chmod` to make the file executable by the owner, and run
+
 ```{bash}
 #| eval: false
 ./middle.sh pg42671.txt 20 5
 ```
-Explain the output. Explain the meaning of `"$1"`, `"$2"`, and `"$3"` in this shell script. Why do we need the first line of the shell script?
 
-**Answer:**
-First, I used vi and type the command, and save the file as `middle.sh`
+Explain the output. Explain the meaning of `"$1"`, `"$2"`, and `"$3"` in
+this shell script. Why do we need the first line of the shell script?
+
+**Answer:** First, I used vi and type the command, and save the file as
+`middle.sh`
+
 ```{bash}
 echo '#!/bin/sh' > middle.sh
 echo '# Select lines from the middle of a file.' >> middle.sh
 echo '# Usage: bash middle.sh filename end_line num_lines' >> middle.sh
 echo 'head -n "$2" "$1" | tail -n "$3"' >> middle.sh
 ```
-Then, I used `chmod` to make the file executable by the owner and run the command
+
+Then, I used `chmod` to make the file executable by the owner and run
+the command
+
 ```{bash}
 #make the middle.sh script executable 
 chmod a+x middle.sh
 ./middle.sh pg42671.txt 20 5
 
 ```
-Output Explanation:
-The output will be the 5 lines from the middle of the file pg42671.txt, starting from line 16 and ending at line 20.
 
-Explanation of `$1`, `$2`, and `$3`:
-Since the following code gives the same output as the command `head -20 pg42671.txt | tail -5`
+**Output Explanation**: The output will be the 5 lines from the middle
+of the file pg42671.txt, starting from line 16 and ending at line 20.
+
+**Explanation of `$1`, `$2`, and `$3`**: Since the following code gives
+the same output as the command `head -20 pg42671.txt | tail -5`
+
 ```{bash}
 head -20 pg42671.txt | tail -5
 ```
-I can conclude that: "$1": Represents the first command-line argument, which is the filename (pg42671.txt in this case).
-"$2": Represents the second command-line argument, which is the end line (20 in this case).
-"$3": Represents the third command-line argument, which is the number of lines (5 in this case).
 
-Purpose of (`#!/bin/sh`):
-(`#!/bin/sh`) is essential for indicating which shell interpreter should be used to execute the script. In this case, it specifies /bin/sh, which is a common location for the Bourne shell. Without this line, the script might be interpreted by a different shell, and its behavior could vary.
+I can conclude that: `$1`: Represents the first command-line argument,
+which is the filename (pg42671.txt in this case). `$2`: Represents the
+second command-line argument, which is the end line (20 in this case).
+`$3`: Represents the third command-line argument, which is the number of
+lines (5 in this case).
+
+Purpose of (`#!/bin/sh`): (`#!/bin/sh`) is essential for indicating
+which shell interpreter should be used to execute the script. In this
+case, it specifies /bin/sh, which is a common location for the Bourne
+shell. Without this line, the script might be interpreted by a different
+shell, and its behavior could vary.
 
 ## Q5. More fun with Linux
 
-Try following commands in Bash and interpret the results: `cal`, `cal 2024`, `cal 9 1752` (anything unusual?), `date`, `hostname`, `arch`, `uname -a`, `uptime`, `who am i`, `who`, `w`, `id`, `last | head`, `echo {con,pre}{sent,fer}{s,ed}`, `time sleep 5`, `history | tail`.
+Try following commands in Bash and interpret the results: `cal`,
+`cal 2024`, `cal 9 1752` (anything unusual?), `date`, `hostname`,
+`arch`, `uname -a`, `uptime`, `who am i`, `who`, `w`, `id`,
+`last | head`, `echo {con,pre}{sent,fer}{s,ed}`, `time sleep 5`,
+`history | tail`.
 
 **Answer:**
+
 ```{bash}
 cal
 ```
+
 `cal`: displays the current month's calendar.
+
 ```{bash}
 cal 2024
 ```
+
 `cal 2024`: displays the calendar for the year 2024.
+
 ```{bash}
 cal 9 1752
 ```
-`cal 9 1752`: displays the calendar for September 1752. The calendar is unusual from the modern calendar because the switch from the Julian to the Gregorian calendar happened in September 1752, so the calendar missed 11 days form September 3 to September 13.
+
+`cal 9 1752`: displays the calendar for September 1752. The calendar is
+unusual from the modern calendar because the switch from the Julian to
+the Gregorian calendar happened in September 1752, so the calendar
+missed 11 days form September 3 to September 13.
+
 ```{bash}
 date
 ```
+
 `date`: Prints the current date and time.
+
 ```{bash}
 hostname
 ```
-`hostname`: prints the hostname of the server that I'm currently logged into.
+
+`hostname`: prints the hostname of the server that I'm currently logged
+into.
+
 ```{bash}
 arch
 ```
-`arch` command in Linux is used to display the architecture of the current system. It provides information about the instruction set architecture of the processor, helping users identify whether it's a 32-bit or 64-bit system. In my case, my system is running on an arm64 architecture, and it means that my processor supports 64-bit instructions. 
+
+`arch` command in Linux is used to display the architecture of the
+current system. It provides information about the instruction set
+architecture of the processor, helping users identify whether it's a
+32-bit or 64-bit system. In my case, my system is running on an arm64
+architecture, and it means that my processor supports 64-bit
+instructions.
+
 ```{bash}
 uname -a
 ```
-`uname -a` command in Linux is used to display detailed information about the system's kernel and hardware. It provides a comprehensive set of details about the system, including the kernel name, network node hostname, kernel release, kernel version, machine hardware name, processor type, hardware platform, and the operating system. In my case, the kernel name is "Darwin," and the network node hostname is "s-169-232-81-195.resnet.ucla.edu." The kernel release, version 22.4.0, indicates the specific version of the Darwin kernel. The timestamp "Mon Mar 6 21:01:02 PST 2023" denotes when the kernel was built.
+
+`uname -a` command in Linux is used to display detailed information
+about the system's kernel and hardware. It provides a comprehensive set
+of details about the system, including the kernel name, network node
+hostname, kernel release, kernel version, machine hardware name,
+processor type, hardware platform, and the operating system. In my case,
+the kernel name is "Darwin," and the network node hostname is
+"s-169-232-81-195.resnet.ucla.edu." The kernel release, version 22.4.0,
+indicates the specific version of the Darwin kernel. The timestamp "Mon
+Mar 6 21:01:02 PST 2023" denotes when the kernel was built.
+
 ```{bash}
 uptime
 ```
-`uptime` command in Linux is used to display the current time, how long the system has been running, and information about the system's load averages. It provides a quick overview of the system's status and activity. In my case, the time "10:07" represents the current time, while "up 39 days, 13:39" indicates that the system has been running continuously for an impressive 39 days and 13 hours. The presence of "2 users" denotes that there are currently two users logged into the system. The load averages, represented as "1.73 1.88 2.18," provide insights into the system's workload over the last 1, 5, and 15 minutes, respectively.
+
+`uptime` command in Linux is used to display the current time, how long
+the system has been running, and information about the system's load
+averages. It provides a quick overview of the system's status and
+activity. In my case, the time "10:07" represents the current time,
+while "up 39 days, 13:39" indicates that the system has been running
+continuously for an impressive 39 days and 13 hours. The presence of "2
+users" denotes that there are currently two users logged into the
+system. The load averages, represented as "1.73 1.88 2.18," provide
+insights into the system's workload over the last 1, 5, and 15 minutes,
+respectively.
+
 ```{bash}
 who am i
 ```
-`who am i` command in Linux is used to display information about the current user who is logged into the system. It provides details such as the username and the time the user logged in. In my case, the username is "jacenai," and the time the user logged in is "Jan 24 10:11"
+
+`who am i` command in Linux is used to display information about the
+current user who is logged into the system. It provides details such as
+the username and the time the user logged in. In my case, the username
+is "jacenai," and the time the user logged in is "Jan 24 10:11"
+
 ```{bash}
 who
 ```
-`who` command displays information about currently logged-in users. It provides details such as the username, terminal, login time
+
+`who` command displays information about currently logged-in users. It
+provides details such as the username, terminal, login time
+
 ```{bash}
 w
 ```
-`w` command displays information about the currently logged-in users and their activities. It provides a summary of user-related information, including details about each user's login session, the time they've been idle, and the commands they are currently running.
+
+`w` command displays information about the currently logged-in users and
+their activities. It provides a summary of user-related information,
+including details about each user's login session, the time they've been
+idle, and the commands they are currently running.
+
 ```{bash}
 id
 ```
-`id` command displays information about the user and group identities (ID) associated with the current user or a specified username.
+
+`id` command displays information about the user and group identities
+(ID) associated with the current user or a specified username.
+
 ```{bash}
 last | head
 ```
-`last` command in Linux is used to display information about previously logged-in users, including their login and logout times. When combined with the `head` command, it limits the output to the specified 10 newest lines.
+
+`last` command in Linux is used to display information about previously
+logged-in users, including their login and logout times. When combined
+with the `head` command, it limits the output to the specified 10 newest
+lines.
+
 ```{bash}
 echo {con,pre}{sent,fer}{s,ed}
 ```
-`echo {con,pre}{sent,fer}{s,ed}` allows me to generate strings by specifying patterns enclosed in curly braces {}. The comma-separated values within the braces represent options, and this command generates all possible combinations of those options. In this case, the command generates the following strings: "consents," "conferred," "consented," "confers," "presents," "presented," "prefers," and "preferred."
+
+`echo {con,pre}{sent,fer}{s,ed}` allows me to generate strings by
+specifying patterns enclosed in curly braces {}. The comma-separated
+values within the braces represent options, and this command generates
+all possible combinations of those options. In this case, the command
+generates the following strings: "consents," "conferred," "consented,"
+"confers," "presents," "presented," "prefers," and "preferred."
 
 ```{bash}
 time sleep 5
 ```
-`time` command in Linux is used to measure the execution time of a given command or script, and `sleep 5` pauses the shell for a duration of five seconds. When combined, the command measures the execution time of the `sleep 5` command. 
+
+`time` command in Linux is used to measure the execution time of a given
+command or script, and `sleep 5` pauses the shell for a duration of five
+seconds. When combined, the command measures the execution time of the
+`sleep 5` command.
 
 ```{bash}
 history | tail
 ```
-`history` command in Linux is used to display the last executed commands. When combined with the `tail` command, it limits the output to the specified 10 newest lines. In my case, since each command is executed seperately in the terminal, the output of the `history` command is empty. But I input expected output if the commands operate in line.
+
+`history` command in Linux is used to display the last executed
+commands. When combined with the `tail` command, it limits the output to
+the specified 10 newest lines. In my case, since each command is
+executed seperately in the terminal, the output of the `history` command
+is empty. But I input expected output if the commands operate in line.
 
 ```{bash}
 # 100  arch
@@ -364,23 +602,36 @@ history | tail
 # 108  time sleep 5
 # 109  history | tail
 ```
+
 ## Q6. Book
 
-1. Git clone the repository <https://github.com/christophergandrud/Rep-Res-Book> for the book _Reproducible Research with R and RStudio_ to your local machine. 
+1.  Git clone the repository
+    <https://github.com/christophergandrud/Rep-Res-Book> for the book
+    *Reproducible Research with R and RStudio* to your local machine.
 
-2. Open the project by clicking `rep-res-3rd-edition.Rproj` and compile the book by clicking `Build Book` in the `Build` panel of RStudio. (Hint: I was able to build `git_book` and `epub_book` but not `pdf_book`.)
+2.  Open the project by clicking `rep-res-3rd-edition.Rproj` and compile
+    the book by clicking `Build Book` in the `Build` panel of RStudio.
+    (Hint: I was able to build `git_book` and `epub_book` but not
+    `pdf_book`.)
 
-The point of this exercise is (1) to get the book for free and (2) to see an example how a complicated project such as a book can be organized in a reproducible way.
+The point of this exercise is (1) to get the book for free and (2) to
+see an example how a complicated project such as a book can be organized
+in a reproducible way.
 
-For grading purpose, include a screenshot of Section 4.1.5 of the book here.
+For grading purpose, include a screenshot of Section 4.1.5 of the book
+here.
 
-**Answer:**
-First, I used fork to create a copy of the repository on github. Then, I used the following command to clone the repository to my local machine.
+**Answer:** First, I used fork to create a copy of the repository on
+github. Then, I used the following command to clone the repository to my
+local machine.
+
 ```{bash}
 #git clone git@github.com:jacenai/Rep-Res-Book.git git@github.com:jacenai/biostat-203b-2024-winter.git
 ```
-Next, I opened the project by clicking `rep-res-3rd-edition.Rproj` and compiled the book by clicking `Build Book` in the `Build` panel of RStudio, during which I downloaded a few R packages. Finally, I was able to build `git_book`. 
-The following screenshot shows the output of Section 4.1.5 of the book.
-![screenshot of Section 4.1.5](/Users/jacenai/Desktop/BIOSTAT_203B/203b-hw/hw1/Section4.1.5.png)
 
-
+Next, I opened the project by clicking `rep-res-3rd-edition.Rproj` and
+compiled the book by clicking `Build Book` in the `Build` panel of
+RStudio, during which I downloaded a few R packages. Finally, I was able
+to build `git_book`. The following screenshot shows the output of
+Section 4.1.5 of the book. ![screenshot of Section
+4.1.5](./Section4.1.5.png)
