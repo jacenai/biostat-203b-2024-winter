@@ -118,10 +118,17 @@ directly in following exercises.
 
 Use Bash commands to answer following questions.
 
-**Answer:** I downloaded the MIMIC-IV v2.2 data to my local machine. I
-made a path to the original directory to MIMIC-IV v2.2 data under the
-path `~/mimic` in my command panel
-(`ln -s /Users/jacenai/Desktop/BIOSTAT_203B/mimic-iv-2.2/  ~/mimic`).
+**Answer:**
+
+I downloaded the MIMIC-IV v2.2 data to my local machine. I create a
+symbolic link to the original directory to MIMIC-IV v2.2 data under the
+path `~/mimic` in my command panel.
+
+```{bash}
+#| eval: false  
+ln -s /Users/jacenai/Desktop/BIOSTAT_203B/mimic-iv-2.2/  ~/mimic
+```
+
 Now, the data files are available at `~/mimic`. The data files are not
 put into Git. The data files are not copied into my directory. The gz
 data files are not decompressed.
@@ -225,14 +232,14 @@ echo "Number of rows in admissions.csv.gz: $row_count"
 
 ```{bash}
 #Count the number of unique patients (identified by subject_id) in admissions.csv.gz:
-subject_count=$(zcat < ~/mimic/hosp/admissions.csv.gz | awk -F ',' '{print $1}' | sort -u | wc -l)
-echo "Number of unique patients in admissions.csv.gz: $subject_count"
+subject_count=$(zcat < ~/mimic/hosp/admissions.csv.gz | tail -n +2 | awk -F ',' '{print $1}' | sort -u | wc -l)
+echo "Number of unique patients in admissions.csv.gz (excluding header): $subject_count"
 ```
 
 ```{bash}
 #Count the number of unique patients (identified by subject_id) in patients.csv.gz:
-subject_count=$(zcat < ~/mimic/hosp/patients.csv.gz | awk -F ',' '{print $1}' | sort -u | wc -l)
-echo "Number of unique patients in patients.csv.gz: $subject_count"
+subject_count=$(zcat < ~/mimic/hosp/patients.csv.gz | tail -n +2 | awk -F ',' '{print $1}' | sort -u | wc -l)
+echo "Number of unique patients in patients.csv.gz (excluding header): $subject_count"
 ```
 
 Therefore, the number of patients listed in the `patients.csv.gz` file
@@ -449,7 +456,11 @@ chmod a+x middle.sh
 ```
 
 **Output Explanation**: The output will be the 5 lines from the middle
-of the file pg42671.txt, starting from line 16 and ending at line 20.
+of the file `pg42671.txt`, starting from line 16 and ending at line 20.
+`pg42671.txt` specifies the file need to read, **`20`** means that it
+extracts the first 20 lines from the file **`pg42671.txt`**, and **`5`**
+means that it extracts the last 5 lines from the output received from
+that 20 lines.
 
 **Explanation of `$1`, `$2`, and `$3`**:
 
@@ -460,11 +471,22 @@ Since the following code gives the same output as the command
 head -20 pg42671.txt | tail -5
 ```
 
-I can conclude that: `$1`: Represents the first command-line argument,
-which is the filename (pg42671.txt in this case). `$2`: Represents the
-second command-line argument, which is the end line (20 in this case).
-`$3`: Represents the third command-line argument, which is the number of
-lines (5 in this case).
+I can conclude that:
+
+`$1`: this is the first argument (**`$1`**) passed to the script. It
+represents the filename of the file. In this case, it's assumed to be a
+file named **`pg42671.txt`**.
+
+`$2`: this is the second argument (**`$2`**) passed to the script. It
+represents the end line number from which to start selecting lines. In
+this case, it's **`20`**, meaning that it extracts the first 20 lines
+from the file **`pg42671.txt`**.
+
+`$3`: this is the third argument (**`$3`**) passed to the script. It
+represents the number of lines to select from the middle. In this case,
+it's **`5`**, meaning that it extracts the last 5 lines from the output
+received from the **`head`** command. The result is then printed to the
+standard output.
 
 **Why do we need the first line of the shell script?** / Purpose of
 (`#!/bin/sh`):
@@ -550,13 +572,7 @@ uptime
 `uptime` command in Linux is used to display the current time, how long
 the system has been running, and information about the system's load
 averages. It provides a quick overview of the system's status and
-activity. In my case, the time "10:07" represents the current time,
-while "up 39 days, 13:39" indicates that the system has been running
-continuously for an impressive 39 days and 13 hours. The presence of "2
-users" denotes that there are currently two users logged into the
-system. The load averages, represented as "1.73 1.88 2.18," provide
-insights into the system's workload over the last 1, 5, and 15 minutes,
-respectively.
+activity.
 
 ```{bash}
 who am i
