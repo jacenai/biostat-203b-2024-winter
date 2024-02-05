@@ -153,12 +153,14 @@ The memory that the resultant tibble uses is 55.31 MB.
 Let us focus on a bigger file, `labevents.csv.gz`, which is about 125x bigger than `admissions.csv.gz`.
 
 ```{bash}
+#| eval: true
 ls -l ~/mimic/hosp/labevents.csv.gz
 ```
 
 Display the first 10 lines of this file.
 
 ```{bash}
+#| eval: true
 zcat < ~/mimic/hosp/labevents.csv.gz | head -10
 ```
 
