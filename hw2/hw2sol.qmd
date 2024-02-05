@@ -26,12 +26,14 @@ execute:
 Display machine information for reproducibility:
 
 ```{r}
+#| eval: true
 sessionInfo()
 ```
 
 Load necessary libraries (you can add more as needed).
 
 ```{r setup}
+#| eval: true
 library(arrow)
 library(data.table)
 library(memuse)
@@ -43,6 +45,7 @@ library(tidyverse)
 Display memory information of your computer
 
 ```{r}
+#| eval: true
 memuse::Sys.meminfo()
 ```
 
@@ -51,10 +54,12 @@ In this exercise, we explore various tools for ingesting the [MIMIC-IV](https://
 Display the contents of MIMIC `hosp` and `icu` data folders:
 
 ```{bash}
+#| eval: true
 ls -l ~/mimic/hosp/
 ```
 
 ```{bash}
+#| eval: true
 ls -l ~/mimic/icu/
 ```
 
@@ -66,41 +71,76 @@ There are quite a few utilities in R for reading plain text data files. Let us t
 
 Which function is fastest? Is there difference in the (default) parsed data types? How much memory does each resultant dataframe or tibble use? (Hint: `system.time` measures run times; `pryr::object_size` measures memory usage.)
 
+**Answer**
+
 ```{r}
 #| eval: true
 library(tidyverse)
 library(data.table)
 library(pryr)
 
-# Define a Function to read and measure time and memory usage
-read_and_measure <- function(file_path, read_function) {
-  # Read the data & measure reading time
-  time_taken <- system.time(read_function(file_path))
-  # Measure the memory usage
-  memory_used <- pryr::object_size(data)
-  # Output results
-  return(list(time_taken = time_taken, memory_used = memory_used))
-}
+mimic_path <- "~/mimic/hosp/"
+# reading time for read.csv
+system.time(data_read.csv <- read.csv(
+  str_c(mimic_path,"admissions.csv.gz")))
+# reading time for read_csv
+system.time(data_read_csv <- read_csv(
+  str_c(mimic_path,"admissions.csv.gz")))
+# reading time for fread
+system.time(data_fread <- fread(
+  str_c(mimic_path,"admissions.csv.gz")))
+```
+```{r}
+#| eval: true
+# memory usage for read.csv
+pryr::object_size(data_read.csv)
+# memory usage for read_csv
+pryr::object_size(data_read_csv)
+# memory usage for fread
+pryr::object_size(data_fread)
+```
 
 
-# Output results
-cat("read.csv time:", read_and_measure(file_path, read.csv)$time_taken, "\n")
-cat("read.csv memory usage:", read_and_measure(file_path, read.csv)$memory_used, "\n")
-
-cat("read_csv time:", read_and_measure(file_path, read_csv)$time_taken, "\n")
-cat("read_csv memory usage:", read_and_measure(file_path, read_csv)$memory_used, "bytes\n")
-
-cat("fread time:", read_and_measure(file_path, fread)$time_taken, "\n")
-cat("fread memory usage:", read_and_measure(file_path, fread)$memory_used, "bytes\n")
+```{r}
+#| eval: true
+# data types for read.csv
+str(data_read.csv)
 ```
 
 ```{r}
+#| eval: true
+# data types for read_csv
+str(data_read_csv)
 ```
+
+```{r}
+#| eval: true
+# data types for fread
+str(data_read_csv)
+```
+
+In terms of the speed and based on the user time, `fread` is the fastest, followed by `read_csv`, and `read.csv` is the slowest. 
+
+In terms of the memory usage of the resultant dataframe or tibble, `fread` uses the least memory, followed by `read_csv`, and `read.csv` uses the most memory.
+
+In terms of the default parsed data types, `fread` and `read_csv` are similar if "double" and "integer" are categorized as "numeric" data type; However, `read.csv` is different in some variables' data type.
 
 
 ### Q1.2 User-supplied data types
 
 Re-ingest `admissions.csv.gz` by indicating appropriate column data types in `read_csv`. Does the run time change? How much memory does the result tibble use? (Hint: `col_types` argument in `read_csv`.)
+
+**Answer**
+```{r}
+#| eval: true
+system.time(data_read_csv <- read_csv(
+  str_c(mimic_path,"admissions.csv.gz"), 
+  col_types = "nnTTTccccccccTTn"))
+pryr::object_size(data_read_csv)
+```
+
+No. The run time almost does not change.
+The memory that the resultant tibble uses is 55.31 MB.
 
 ## Q2. Ingest big data files
 
@@ -132,9 +172,17 @@ zcat < ~/mimic/hosp/labevents.csv.gz | head -10
 
 Try to ingest `labevents.csv.gz` using `read_csv`. What happens? If it takes more than 5 minutes on your computer, then abort the program and report your findings.
 
+```{r}
+library(tidyverse)
+read_csv(str_c("~/mimic/hosp/","labevents.csv.gz"))
+```
 ### Q2.2 Ingest selected columns of `labevents.csv.gz` by `read_csv`
 
 Try to ingest only columns `subject_id`, `itemid`, `charttime`, and `valuenum` in `labevents.csv.gz` using `read_csv`. Does this solve the ingestion issue? (Hint: `col_select` argument in `read_csv`.)
+
+```{r}
+read_csv("~/mimic/hosp/labevents.csv.gz", col_select = c("subject_id", "itemid", "charttime", "valuenum"))
+```
 
 ### Q2.3 Ingest subset of `labevents.csv.gz`
 
