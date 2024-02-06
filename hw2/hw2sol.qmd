@@ -177,8 +177,9 @@ zcat < ~/mimic/hosp/labevents.csv.gz | head -10
 
 </p>
 
-Try to ingest `labevents.csv.gz` using `read_csv`. What happens? If it takes more than 5 minutes on your computer, then abort the program and report your findings. 
-**Answer**
+Try to ingest `labevents.csv.gz` using `read_csv`. What happens? If it takes more than 5 minutes on your computer, then abort the program and report your findings.
+
+**Answer** I tried to read the file using `read_csv` function as follows:
 
 ```{r}
 #| eval: false
@@ -191,6 +192,8 @@ I spent more than 5 minutes to read the file, but it was not finished. So, I abo
 
 Try to ingest only columns `subject_id`, `itemid`, `charttime`, and `valuenum` in `labevents.csv.gz` using `read_csv`. Does this solve the ingestion issue? (Hint: `col_select` argument in `read_csv`.)
 
+**Answer:** I tried to read the file using `read_csv` function with `col_select` argument as follows:
+
 ```{r}
 #| eval: true
 read_csv("~/mimic/hosp/labevents.csv.gz", 
@@ -199,6 +202,8 @@ read_csv("~/mimic/hosp/labevents.csv.gz",
                         "charttime", 
                         "valuenum"))
 ```
+
+It solved the ingestion issue. The file was read around 5 mins. However, the file is still quite large, and the memory usage is high.
 
 ### Q2.3 Ingest subset of `labevents.csv.gz`
 
@@ -219,7 +224,7 @@ Display the first 10 lines of the new file `labevents_filtered.csv.gz`. How many
 First, displaying the first 10 lines of the `labevents.csv.gz` file to know the structure of the file and the sequence of the columns.
 
 ```{bash}
-#| eval: false
+#| eval: true
 zcat < ~/mimic/hosp/labevents.csv.gz | head
 ```
 
@@ -249,7 +254,7 @@ To calculate the number of lines in the new file `labevents_filtered.csv.gz`. Th
 zcat < ~/mimic/hosp/labevents_filtered.csv.gz | wc -l
 ```
 
-Finally, to measure how long it takes to ingest `labevents_filtered.csv.gz`. It takes around 216 seconds to ingest the new file `labevents_filtered.csv.gz`.
+Finally, to measure how long it takes to ingest `labevents_filtered.csv.gz`. It takes around 23 seconds to ingest the new file `labevents_filtered.csv.gz`.
 
 ```{r}
 #| eval: true
@@ -300,7 +305,9 @@ execution_time <- end_time - start_time
 execution_time
 ```
 
-The ingest+select+filter process takes around 0.05140901 secs. The number of rows in the result tibble is 24855909. Then, to display the first 10 rows of the result tibble and they match those in Q2.3.
+The ingest+select+filter process takes around 0.05140901 secs. The number of rows in the result tibble is 24855909.
+
+Then, to display the first 10 rows of the result tibble and they match those in Q2.3.
 
 ```{r}
 #| eval: true
@@ -360,7 +367,9 @@ execution_time
 
 ```
 
-The ingest+select+filter process of the Parquet file takes around 0.202384 secs. And the number of rows in the result tibble is 24855909. Then, to display the first 10 rows of the result tibble and their contents match those in Q2.3, even though the order of the rows may be different.
+The ingest+select+filter process of the Parquet file takes around 0.202384 secs. And the number of rows in the result tibble is 24855909.
+
+Then, to display the first 10 rows of the result tibble and their contents match those in Q2.3, even though the order of the rows may be different.
 
 ```{r}
 #| eval: true
@@ -413,7 +422,9 @@ execution_time
 
 ```
 
-The ingest+convert+select+filter process takes around 38.68542 secs. And the number of rows in the result tibble is 24855909. Then, to display the first 10 rows of the result tibble and their contents match those in Q2.3, even though the order of the rows may be different.
+The ingest+convert+select+filter process takes around 38.68542 secs. And the number of rows in the result tibble is 24855909.
+
+Then, to display the first 10 rows of the result tibble and their contents match those in Q2.3, even though the order of the rows may be different.
 
 ```{r}
 #| eval: true
