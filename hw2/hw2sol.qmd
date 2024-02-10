@@ -207,7 +207,7 @@ read_csv("~/mimic/hosp/labevents.csv.gz",
                         "valuenum"))
 ```
 
-It solved the ingestion issue. The file was read around 5 mins. However, the file is still quite large, and the memory usage is high.
+It doesn't solve the ingestion issue. The file was read more than 5 mins. Also, the file is still quite large, and the memory usage is high.
 
 ### Q2.3 Ingest subset of `labevents.csv.gz`
 
