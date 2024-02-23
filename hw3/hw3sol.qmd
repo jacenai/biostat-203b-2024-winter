@@ -620,12 +620,18 @@ Hint: Use the Parquet format you generated in Homework 2. For reproducibility, m
 **Answer**
 
 ```{r}
-icustays_tble <- read_csv("~/mimic/icu/icustays.csv.gz") |> 
+#| eval: true
+icustays_tble <- arrow::open_dataset("~/mimic/icu/icustays.csv.gz", 
+                                     format = "csv") %>%
+  collect() %>%
   print(width = Inf)
 ```
 
+
 ```{r}
-dlabitems_tble <- read_csv("~/mimic/hosp/d_labitems.csv.gz") |> 
+#| eval: true
+dlabitems_tble <- arrow::open_dataset("~/mimic/hosp/d_labitems.csv.gz", 
+                                      format = "csv") %>%
   filter(itemid %in% c(50912, 
                        50971, 
                        50983, 
@@ -633,15 +639,14 @@ dlabitems_tble <- read_csv("~/mimic/hosp/d_labitems.csv.gz") |>
                        50882, 
                        51221, 
                        51301, 
-                       50931)) |> 
+                       50931)) %>%
+  collect() %>%
   print(width = Inf)
-
 ```
 
 ```{r}
-labevents_tble_orig <- open_dataset("labevents_pq") |>
-  #semi_join(dlabevents_tble, by = "itemid") |>
-  #semi_join(icustays_tble, by = "subject_id") |>
+#| eval: true
+labevents <- arrow::open_dataset('./labevents_pq', format = "parquet") |>
   select(subject_id, itemid, storetime, valuenum) |>
   filter(itemid %in% dlabitems_tble$itemid) |>
   filter(subject_id %in% icustays_tble$subject_id) |>
@@ -650,39 +655,27 @@ labevents_tble_orig <- open_dataset("labevents_pq") |>
 ```
 
 ```{r}
-if (file.exists("labevents_tble_orig.rds")) {
-  labevents_tble_orig <- read_rds("labevents_tble_orig.rds")
-} else {
-  labevents_tble_orig <- labevents_tble_orig |>
-  #
-  left_join(select(icustays_tble, subject_id, stay_id, intime),
-            by = "subject_id") |>
-  #
-  filter(storetime <= intime) |>
-  # try to keep the latest measurement
-  group_by(subject_id, stay_id, itemid) |>
-  #
-  arrange(storetime, .by_group = TRUE) |>
-  slice_tail(n = 1) |>
-  # or this way: filter(storetime == max(storetime)) |>
-  
-  #
-  select(-storetime, -intime) |>
-  #because the form of the `itemid` is in long format, we need to convert it to wide format
-  pivot_wider(names_from = itemid, values_from = valuenum)
-  
-  # #use the more meaningful names by renaming the columns
-  # rename_with(~dlabitems_tble$name[match(., dlabitems_tble$itemid)], 
-  #             starts_with("50912") ~ "creatinine", 
-  #             starts_with("50971") ~ "potassium", 
-  #             starts_with("50983") ~ "sodium", 
-  #             starts_with("50902") ~ "chloride", 
-  #             starts_with("50882") ~ "bicarbonate", 
-  #             starts_with("51221") ~ "hematocrit", 
-  #             starts_with("51301") ~ "white_blood_cell_count", 
-  #             starts_with("50931") ~ "glucose") 
-  #print(width = Inf)
-}
+#| eval: true
+labevents_tble <- labevents |>
+# join with icustays_tble to the labevents table to 
+# get the stay_id and intime
+left_join(icustays_tble[,c('subject_id', 'stay_id', 'intime')],
+          by = "subject_id") |>
+# make sure the lab measurement is before the ICU stay
+filter(storetime <= intime) |>
+# try to keep the latest measurement
+group_by(subject_id, stay_id, itemid) |>
+# sort by storetime and keep the last measurement
+arrange(storetime, by_group = TRUE) |>
+slice_tail(n = 1) |>
+# remove the storetime and intime columns
+select(-storetime, -intime) |>
+# because the form of the `itemid` is in long format, 
+# we need to convert it to wide format
+pivot_wider(names_from = itemid, values_from = valuenum) |>
+# use the more meaningful names by renaming the columns
+rename_with(~dlabitems_tble$name[d_labitems$itemid == .x],
+            .cols = -c(subject_id, stay_id))
 ```
 
 ## Q6. Vitals from charted events
@@ -704,6 +697,75 @@ We are interested in the vitals for ICU patients: heart rate (220045), systolic 
 ![](chartevents_tble.png)
 
 Hint: Use the Parquet format you generated in Homework 2. For reproducibility, make `chartevents_pq` folder available at the current working directory, for example, by a symbolic link.
+
+**Answer**
+
+I create a symbolic link for the original directory to the Parquet file `chartevents.parquet` under the path under the folder `./chartevents_pq` available at the current working directory `hw3` for reproducibility.
+
+```{bash}
+#| eval: true  
+ln -s ~/mimic/icu/chartevents.parquet/  ./chartevents_pq
+```
+
+```{r}
+#| eval: true
+d_items_tble <- arrow::open_dataset("~/mimic/icu/d_items.csv.gz", 
+                                    format = "csv") %>%
+  filter(itemid %in% c(220045, 220179, 220180, 223761, 220210)) %>%
+  collect() %>%
+  print(width = Inf)
+```
+
+```{r}
+chartevents <- arrow::open_dataset('./chartevents_pq', format = "parquet") |>
+  select(subject_id, itemid, charttime, valuenum) |>
+  filter(itemid %in% c(220045, 220179, 220180, 223761, 220210)) |>
+  filter(subject_id %in% icustays_tble$subject_id) |>
+  collect() |>
+  print(width = Inf)
+```
+```{r}
+chartevents_tble <- chartevents |>
+  # join with icustays_tble to the chartevents table to 
+  # get the stay_id and intime
+  left_join(icustays_tble[,c('subject_id', 'stay_id', 'intime', 'outtime')],
+            by = "subject_id") |>
+  
+  # make sure the charted event is within the ICU stay
+  filter(charttime <= intime) |>
+  filter(charttime >= outtime) |>
+  # try to keep the first measurement
+  group_by(subject_id, stay_id, itemid) 
+```
+
+
+```{r}
+  chartevents_tble <- chartevents |>
+# join with icustays_tble to the chartevents table to 
+# get the stay_id and intime
+left_join(icustays_tble[,c('subject_id', 'stay_id', 'intime', 'outtime')],
+          by = "subject_id") |>
+# make sure the charted event is within the ICU stay
+filter(charttime >= intime) |>
+filter(charttime <= outtime) |>
+# try to keep the first measurement
+group_by(subject_id, stay_id, itemid) |>
+# sort by charttime and keep the first measurement
+arrange(charttime, by_group = TRUE) |>
+slice_head(n = 1) |>
+# remove the charttime and intime columns
+select(-charttime, -intime, -outtime) |>
+# because the form of the `itemid` is in long format,
+# we need to convert it to wide format
+pivot_wider(names_from = itemid, values_from = valuenum) |>
+# use the more meaningful names by renaming the columns
+rename_with(~d_items_tble$label[d_items_tble$itemid == .x], 
+            .cols = -c(subject_id, stay_id)) |>
+print(width = Inf)
+
+```
+
+
 
 ## Q7. Putting things together
 
