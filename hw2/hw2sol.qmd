@@ -449,6 +449,13 @@ head(result, 10)
 
 **Explanation of DuckDB**: DuckDB is like a digital filing cabinet for data. It's a special kind of software that helps organize and store large amounts of data in a way that makes it easy to find and work with. Think of it as a super-efficient librarian that keeps all your data neatly organized and quickly accessible. It's especially useful for tasks like analyzing data, running calculations, and generating reports, making it a valuable tool for businesses and researchers who deal with lots of data.
 
+Fast
+DuckDB is designed to support analytical query workloads, also known as online analytical processing (OLAP). These workloads are characterized by complex, relatively long-running queries that process significant portions of the stored dataset, for example aggregations over entire tables or joins between several large tables. Changes to the data are expected to be rather large-scale as well, with several rows being appended, or large portions of tables being changed or added at the same time.
+
+To efficiently support this workload, it is critical to reduce the amount of CPU cycles that are expended per individual value. The state of the art in data management to achieve this are either vectorized or just-in-time query execution engines. DuckDB contains a columnar-vectorized query execution engine, where queries are still interpreted, but a large batch of values (a “vector”) are processed in one operation. This greatly reduces overhead present in traditional systems such as PostgreSQL, MySQL or SQLite which process each row sequentially. Vectorized query execution leads to far better performance in OLAP queries.
+
+
+
 ## Q3. Ingest and filter `chartevents.csv.gz`
 
 [`chartevents.csv.gz`](https://mimic.mit.edu/docs/iv/modules/icu/chartevents/) contains all the charted data available for a patient. During their ICU stay, the primary repository of a patient's information is their electronic chart. The `itemid` variable indicates a single measurement type in the database. The `value` variable is the value measured for `itemid`. The first 10 lines of `chartevents.csv.gz` are
