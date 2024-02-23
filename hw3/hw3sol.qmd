@@ -360,7 +360,8 @@ Import `icustays.csv.gz` as a tibble `icustays_tble`.
 
 ```{r}
 #| eval: true
-icustays_tble <- arrow::open_dataset("~/mimic/icu/icustays.csv.gz", format = "csv") %>%
+icustays_tble <- arrow::open_dataset("~/mimic/icu/icustays.csv.gz", 
+                                     format = "csv") %>%
   collect()
 ```
 
@@ -424,6 +425,13 @@ zcat < ~/mimic/hosp/admissions.csv.gz | head
 
 Import `admissions.csv.gz` as a tibble `admissions_tble`.
 
+```{r}
+#| eval: true
+admissions_tble <- arrow::open_dataset("~/mimic/hosp/admissions.csv.gz", 
+                                       format = "csv") %>%
+  collect()
+```
+
 ### Q3.2 Summary and visualization
 
 Summarize the following information by graphics and explain any patterns you see.
@@ -437,6 +445,88 @@ According to the [MIMIC-IV documentation](https://mimic.mit.edu/docs/iv/about/co
 
 > All dates in the database have been shifted to protect patient confidentiality. Dates will be internally consistent for the same patient, but randomly distributed in the future. Dates of birth which occur in the present time are not true dates of birth. Furthermore, dates of birth which occur before the year 1900 occur if the patient is older than 89. In these cases, the patient's age at their first admission has been fixed to 300.
 
+**Answer**
+
+**Number of admissions per patient**:
+
+The pattern of the number of admissions per patient:
+
+The majority of patients have only one admission, and a small portion of patients have multiple admissions.
+
+```{r}
+#| eval: true
+# number of admissions per patient
+admissions_tble %>%
+  group_by(subject_id) %>%
+  summarise(num_admissions = n_distinct(hadm_id)) %>%
+  ggplot(aes(x = num_admissions)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Distribution of admissions per patient",
+       x = "Number of admissions per subject_id",
+       y = "Frequency") +
+  theme_minimal()
+```
+
+**Admission hour**:
+
+The pattern of the admission hour:
+
+Yes. There are some unusual patterns in the admission hour. The number of admission hour decreases from 0 to 6, and then increases from 8 to 18, with an exception at 7. Then, the number of admission hour decreases from 18 to 23.The frequencies from 0 and 7 seem unusual because they are higher than expected for late night and early morning times. This could be due to certain hospital operations or activities during those hours.
+
+```{r}
+#| eval: true
+# change the timezone to UTC
+admissions_tble_admission_hour <- admissions_tble %>%
+  mutate(admittime = with_tz(admittime, "UTC")) 
+
+# plot the admission hour
+admissions_tble_admission_hour %>%
+  ggplot(aes(x = hour(admittime))) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Admission Hour",
+       x = "Hour",
+       y = "Count") +
+  theme_minimal()
+```
+
+**Admission minute**:
+
+The pattern of the admission minute:
+
+Yes. There are unusual patterns in the admission minute. The frequencies of the admission minute are extremely high at some specific minutes, such as 0, 15, 30, and 45. This could be due to the fact that the admission time is recorded at these specific minutes, or the data is rounded to these specific minutes. For the rest of the minutes, the frequencies are relatively low.
+
+```{r}
+#| eval: true
+admissions_tble_admission_hour %>%
+  ggplot(aes(x = minute(admittime))) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Admission Minute",
+       x = "Minute",
+       y = "Count") +
+  theme_minimal()
+```
+
+**Length of hospital stay**:
+
+The pattern of the length of hospital stay:
+
+I think the distribution of the length of hospital stay is not unusual. The majority of patients stayed in the hospital for less than 10 days, and only a few patients stayed in the hospital for more than 10 days. The maximum length of stay is around 120 days, which is expected as most patients are admitted for short-term care, and only a few patients require long-term care.
+
+```{r}
+#| eval: true
+length_of_stay <- admissions_tble %>%
+  mutate(dischtime = with_tz(dischtime, "UTC")) %>%
+  mutate(admittime = with_tz(admittime, "UTC")) %>%
+  mutate(length_of_stay = as.numeric(difftime(dischtime, admittime, units = "days")))
+length_of_stay %>%
+  ggplot(aes(x = length_of_stay)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Length of Hospital Stay",
+       x = "Length of Stay (days)",
+       y = "Count") +
+  theme_minimal()
+```
+
 ## Q4. `patients` data
 
 Patient information is available in `patients.csv.gz`. See <https://mimic.mit.edu/docs/iv/modules/hosp/patients/> for details of each field in this file. The first 10 lines are
@@ -449,9 +539,63 @@ zcat < ~/mimic/hosp/patients.csv.gz | head
 
 Import `patients.csv.gz` (<https://mimic.mit.edu/docs/iv/modules/hosp/patients/>) as a tibble `patients_tble`.
 
+**Answer**
+
+```{r}
+#| eval: true
+patients_tble <- arrow::open_dataset(
+  sources = "~/mimic/hosp/patients.csv.gz", 
+  format = "csv"
+) %>%
+  dplyr::collect()
+```
+
 ### Q4.2 Summary and visualization
 
 Summarize variables `gender` and `anchor_age` by graphics, and explain any patterns you see.
+
+**Answer**
+
+**Summary of `gender`**:
+
+Explanation of the pattern:
+
+According to the pie chart, there are more male than female patients. This may be due to the gender distribution in the general population in the area where the hospital is located.
+
+```{r}
+#| eval: true
+# add percentage of each gender
+gender_summary <- patients_tble %>%
+  count(gender) %>%
+  mutate(percentage = n / sum(n) * 100)
+
+# plot the pie chart
+ggplot(gender_summary, aes(x = "", y = percentage, fill = gender)) +
+  geom_bar(stat = "identity", width = 1) +
+  geom_text(aes(label = paste0(round(percentage), "%")), position = position_stack(vjust = 0.5)) +
+  # use coord_polar to make the pie chart
+  coord_polar(theta = "y") +
+  labs(title = "Distribution of Gender", fill = "Gender") +
+  theme_void()
+```
+
+**Summary of `anchor_age`**:
+
+Explanation of the pattern:
+
+The distribution of anchor_age is multimodal, with peaks at around 21, 60, and over 89. This suggests that there are different age groups represented in the dataset, with a relatively high number of patients in their early 20s and around 60 years old. This could be due to the fact that certain age groups are more likely to require hospital care, or it could be due to the demographics of the general population in the area where the hospital is located. There are also a few patients who are over 89 years old, which may due to that some elderly patients' age is recorded as fixed value if they are over 89 years old.
+
+```{r}
+#| eval: true
+# using bar plot to show the distribution of anchor_age
+patients_tble %>%
+  ggplot(aes(x = anchor_age)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Distribution of Anchor Age",
+       x = "Anchor Age",
+       y = "Count") +
+  theme_minimal()
+```
 
 ## Q5. Lab results
 
