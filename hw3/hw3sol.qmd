@@ -25,6 +25,7 @@ sessionInfo()
 Load necessary libraries (you can add more as needed).
 
 ```{r setup}
+#| eval: true
 library(arrow)
 library(gtsummary)
 library(memuse)
@@ -157,7 +158,7 @@ arrow::write_dataset(arrow::open_dataset(file_path, format = "csv"),
 Also, I create a symbolic link for the original directory to the Parquet file `labevents.parquet` under the path under the folder `./labevents_pq` available at the current working directory `hw3` for reproducibility.
 
 ```{bash}
-#| eval: true  
+#| eval: false
 ln -s ~/mimic/hosp/labevents.parquet/  ./labevents_pq
 ```
 
@@ -630,16 +631,14 @@ icustays_tble <- arrow::open_dataset("~/mimic/icu/icustays.csv.gz",
 
 ```{r}
 #| eval: true
+target_items <- c(50912, 50971, 
+                  50983, 50902, 
+                  50882, 51221, 
+                  51301, 50931)
+
 dlabitems_tble <- arrow::open_dataset("~/mimic/hosp/d_labitems.csv.gz", 
                                       format = "csv") %>%
-  filter(itemid %in% c(50912, 
-                       50971, 
-                       50983, 
-                       50902, 
-                       50882, 
-                       51221, 
-                       51301, 
-                       50931)) %>%
+  filter(itemid %in% target_items) %>%
   collect() %>%
   print(width = Inf)
 ```
@@ -648,21 +647,22 @@ dlabitems_tble <- arrow::open_dataset("~/mimic/hosp/d_labitems.csv.gz",
 #| eval: true
 labevents <- arrow::open_dataset('./labevents_pq', format = "parquet") |>
   select(subject_id, itemid, storetime, valuenum) |>
-  filter(itemid %in% dlabitems_tble$itemid) |>
+  filter(itemid %in% target_items) |>
   filter(subject_id %in% icustays_tble$subject_id) |>
   collect() |>
   print(width = Inf)
 ```
 
 ```{r}
-#| eval: true
+#| eval: false
 labevents_tble <- labevents |>
 # join with icustays_tble to the labevents table to 
 # get the stay_id and intime
 left_join(icustays_tble[,c('subject_id', 'stay_id', 'intime')],
           by = "subject_id") |>
 # make sure the lab measurement is before the ICU stay
-filter(storetime <= intime) |>
+filter(storetime < intime) |>
+filter(!is.na(valuenum)) |>
 # try to keep the latest measurement
 group_by(subject_id, stay_id, itemid) |>
 # sort by storetime and keep the last measurement
@@ -717,6 +717,7 @@ d_items_tble <- arrow::open_dataset("~/mimic/icu/d_items.csv.gz",
 ```
 
 ```{r}
+#| eval: true
 chartevents <- arrow::open_dataset('./chartevents_pq', format = "parquet") |>
   select(subject_id, itemid, charttime, valuenum) |>
   filter(itemid %in% c(220045, 220179, 220180, 223761, 220210)) |>
@@ -724,23 +725,11 @@ chartevents <- arrow::open_dataset('./chartevents_pq', format = "parquet") |>
   collect() |>
   print(width = Inf)
 ```
+
+
 ```{r}
+#| eval: true
 chartevents_tble <- chartevents |>
-  # join with icustays_tble to the chartevents table to 
-  # get the stay_id and intime
-  left_join(icustays_tble[,c('subject_id', 'stay_id', 'intime', 'outtime')],
-            by = "subject_id") |>
-  
-  # make sure the charted event is within the ICU stay
-  filter(charttime <= intime) |>
-  filter(charttime >= outtime) |>
-  # try to keep the first measurement
-  group_by(subject_id, stay_id, itemid) 
-```
-
-
-```{r}
-  chartevents_tble <- chartevents |>
 # join with icustays_tble to the chartevents table to 
 # get the stay_id and intime
 left_join(icustays_tble[,c('subject_id', 'stay_id', 'intime', 'outtime')],
@@ -780,7 +769,30 @@ Let us create a tibble `mimic_icu_cohort` for all ICU stays, where rows are all 
 The final `mimic_icu_cohort` should have one row per ICU stay and columns for each variable.
 
 ![](mimic_icu_cohort.png)
+```{r}
+#| eval: true
+mimic_icu_cohort <- icustays_tble |>
+# join with chartevents_tble to the icustays table to get the
+# first vital measurements within the ICU stay
+  left_join(chartevents_tble, by = c("subject_id", "stay_id")) |>
+# join with patients_tble to the icustays table to get the
+# patient information
+  left_join(patients_tble, by = "subject_id") |>
+# join with admissions_tble to the icustays table to get the
+# admission information
+  left_join(admissions_tble, by = "hadm_id", "subject_id") |>
 
+  mutate(age_at_intime = anchor_age + year(intime) - anchor_year) |>
+  filter(age_at_intime >= 18) |>
+  print(width = Inf)
+# join with labevents_tble to the icustays table to get the
+# last lab measurements before ICU stay
+  #left_join(labevents_tble, by = c("subject_id", "stay_id")) |>
+
+  
+  print(width = Inf)
+```
+  
 ## Q8. Exploratory data analysis (EDA)
 
 Summarize the following information about the ICU stay cohort `mimic_icu_cohort` using appropriate numerics or graphs:
@@ -792,3 +804,140 @@ Summarize the following information about the ICU stay cohort `mimic_icu_cohort`
 -   Length of ICU stay `los` vs the first vital measurements within the ICU stay
 
 -   Length of ICU stay `los` vs first ICU unit
+
+**Answer**
+\(1.1\) Length of ICU stay `los` vs demographic
+```{r}
+#| eval: true
+mimic_icu_cohort %>%
+  group_by(race) %>%
+  ggplot(aes(x = los, y = race)) +
+  geom_col() 
+  labs(title = "Summary of Length of ICU stay by race",
+       x = "Race",
+       y = "Length of ICU stay (days)") +  
+  theme_minimal()
+  
+mimic_icu_cohort %>%
+  group_by(race) %>%
+  summarize(mean_los = mean(los, na.rm = TRUE),
+            std_dev = sd(los, na.rm = TRUE),
+            iqr = IQR(los, na.rm = TRUE)) 
+
+
+```
+\(1.2\) Length of ICU stay `los` vs insurance
+```{r}
+#| eval: true
+mimic_icu_cohort %>%
+  group_by(insurance) %>%
+  ggplot(aes(x = los, y = insurance)) +
+  geom_boxplot() +
+  labs(title = "Summary of Length of ICU stay by insurance",
+       x = "Insurance",
+       y = "Length of ICU stay (days)") +  
+  theme_minimal()
+```
+\(1.3\) Length of ICU stay `los` vs marital_status
+```{r}
+#| eval: true
+mimic_icu_cohort %>%
+  group_by(marital_status) %>%
+  ggplot(aes(x = los, y = marital_status)) +
+  geom_violin() +
+  
+  labs(title = "Summary of Length of ICU stay by Marital Status",
+       x = "Length of ICU stay (days)",
+       y = "Marital Status") +  
+  theme_minimal()
+
+```
+\(1.4\) Length of ICU stay `los` vs gender
+```{r}
+#| eval: true
+mimic_icu_cohort %>%
+  group_by(gender) %>%
+  ggplot(aes(x = gender, y = los)) +  # Corrected aesthetics specification
+  geom_count() +
+  labs(title = "Summary of Length of ICU stay by Gender",
+       x = "Gender",
+       y = "Length of ICU stay (days)") +
+  theme_minimal()
+```
+\(1.5\) Length of ICU stay `los` vs age at intime
+```{r}
+#| eval: true
+mimic_icu_cohort |>
+  ggplot(aes(y = los, x = age_at_intime)) +
+  geom_point() +
+  labs(title = "Length of ICU stay vs age at intime",
+       x = "Length of ICU stay (days)",
+       y = "Age at intime (years)") +
+  theme_minimal()
+```
+\(2\) Length of ICU stay `los` vs the last available lab measurements before ICU stay
+```{r}
+#| eval: true
+# get the last lab measurements before ICU stay
+mimic_icu_cohort_lab_last <- mimic_icu_cohort %>%
+  select(los, contains("lab_")) %>%
+  drop_na() %>%
+  pivot_longer(cols = -los, names_to = "lab_measure", values_to = "value") %>%
+  mutate(lab_measure = str_remove(lab_measure, "lab_")) %>%
+  group_by(lab_measure) %>%
+  summarize(mean_los = mean(los, na.rm = TRUE),
+            std_dev = sd(los, na.rm = TRUE),
+            iqr = IQR(los, na.rm = TRUE)) %>%
+  arrange(desc(mean_los)) %>%
+  print(width = Inf)
+
+```
+
+```{r}
+mimic_icu_cohort_availability <- mimic_icu_cohort %>%
+  select(los, contains("lab_")) %>%
+  drop_na() %>%
+  pivot_longer(cols = -los, names_to = "lab_measure", values_to = "value") %>%
+  mutate(lab_measure = str_remove(lab_measure, "lab_")) %>%
+  group_by(lab_measure) %>%
+  summarize(mean_los = mean(los, na.rm = TRUE),
+            std_dev = sd(los, na.rm = TRUE),
+            iqr = IQR(los, na.rm = TRUE)) %>%
+  arrange(desc(mean_los)) %>%
+  print(width = Inf)
+```
+
+\(3\) Length of ICU stay `los` vs the first vital measurements within the ICU stay
+```{r}
+# get the first vital measurements within the ICU stay
+# Create boxplot for each vital measure
+mimic_icu_cohort_vital <- mimic_icu_cohort %>%
+  filter(!is.na(los) & los > 0) %>%
+  gather(key = 'vital_measure', value = 'vital_value', 9:13)
+
+# Plotting with line plot and adjusted axis scaling
+mimic_icu_cohort_vital %>%
+  ggplot(mapping = aes(x = los, y = vital_value, group = vital_measure, color = vital_measure)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~vital_measure, scales = "free_y") +  # Adjusted y-axis scaling
+  labs(title = "Trends of First Vital Measurements over ICU Stay Length",
+       x = "Length of ICU stay (days)",
+       y = "Vital measurements") +
+  theme_minimal()   
+  
+```
+
+\(4\) Length of ICU stay `los` vs first ICU
+```{r}
+mimic_icu_cohort %>%
+  count(first_careunit) %>%
+  ggplot(aes(x = "", y = n, fill = first_careunit)) +
+  geom_bar(width = 1, stat = "identity", color = "white") +
+  labs(title = "Proportion of ICU Stays by First ICU",
+       x = "First ICU",
+       y = "Proportion",
+       fill = "First ICU") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  theme_minimal() 
+
+```
