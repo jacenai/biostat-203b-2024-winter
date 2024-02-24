@@ -264,6 +264,7 @@ ADT_history <- ggplot() +
              size = 3) + 
   
   # Manually set the number of shapes according to the number of titles
+  # For reproducibility, I use n_distinct to determine the length
   scale_shape_manual(values = c(1:n_distinct(procedures$long_title))) +
   
   # Add lab events
@@ -549,7 +550,7 @@ Yes. There are some unusual patterns in the admission hour.
 
 -   Pattern:
 
-The number of admission hour decreases from 0 to 6, and then increases from 8 to 18, with an exception at 7. Then, the number of admission hour decreases from 18 to 23.The frequencies from 0 and 7 seem unusual because they are higher than expected for late night and early morning times.
+The number of admission hour decreases from 0 to 6, and then increases from 8 to 18, with an exception at 7. Then, the number of admission hour decreases from 18 to 23. The frequencies from 0 and 7 seem unusual because they are higher than expected for late night and early morning times.
 
 -   Explanation:
 
@@ -567,7 +568,7 @@ admissions_tble_admission_hour %>%
   geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
   labs(title = "Admission Hour",
        x = "Hour",
-       y = "Count") +
+       y = "Frequency") +
   theme_minimal()
 ```
 
@@ -592,7 +593,7 @@ admissions_tble_admission_hour %>%
   geom_bar(fill = "skyblue", color = "black") +
   labs(title = "Admission Minute",
        x = "Minute",
-       y = "Count") +
+       y = "Frequency") +
   theme_minimal()
 ```
 
@@ -626,7 +627,7 @@ length_of_stay %>%
   geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
   labs(title = "Length of Hospital Stay",
        x = "Length of Stay (days)",
-       y = "Count") +
+       y = "Frequency") +
   theme_minimal()
 ```
 
@@ -697,7 +698,7 @@ patients_tble %>%
   geom_bar() +
   labs(title = "Distribution of age",
        x = "Age",
-       y = "Density") +
+       y = "Frequency") +
   theme_minimal()
 ```
 
@@ -719,7 +720,7 @@ patients_tble %>%
   geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
   labs(title = "Distribution of Anchor Age",
        x = "Anchor Age",
-       y = "Count") +
+       y = "Frequency") +
   theme_minimal()
 ```
 
@@ -807,7 +808,7 @@ if (file.exists("labevents_tble.rds")) {
   labevents_tble <- labevents %>%
     
     # join with icustays_tble to the labevents table to 
-    # get the stay_id and intime
+    # get the stay_id, and intime
     left_join(icustays_tble[, c('subject_id', 'stay_id', 'intime')],
               by = "subject_id") %>%
     
@@ -1026,10 +1027,10 @@ Getting both the bar plot and the summary statistics for the length of ICU stay
 mimic_icu_cohort %>%
   group_by(race) %>%
   ggplot(aes(x = los, y = race)) +
-  geom_col() +
+  geom_point() +
   labs(title = "Summary of Length of ICU stay by race",
-       x = "Race",
-       y = "Length of ICU stay (days)") +  
+       x = "Length of ICU stay (days)",
+       y = "Race") +  
   theme_minimal()
 
 # get the mean, standard deviation and IQR of the length of ICU stay
@@ -1057,8 +1058,8 @@ mimic_icu_cohort %>%
   geom_boxplot() +
   
   labs(title = "Summary of Length of ICU stay by insurance",
-       x = "Insurance",
-       y = "Length of ICU stay (days)") +  
+       x = "Length of ICU stay (days)",
+       y = "Insurance") +  
   theme_minimal()
 ```
 
@@ -1115,8 +1116,8 @@ mimic_icu_cohort %>%
   geom_point() +
   
   labs(title = "Summary of Length of ICU stay by Age at intime",
-       x = "Length of ICU stay (days)",
-       y = "Age at intime") +
+       x = "Age at intime",
+       y = "Length of ICU stay (days)") +
   theme_minimal()
 ```
 
@@ -1139,7 +1140,7 @@ mimic_icu_cohort_select <- mimic_icu_cohort %>%
   select(all_of(variables), los) %>%
   
   # remove missing values
-  drop_na() %>%
+  filter(across(c(all_of(variables), los), ~ !is.na(.))) %>%
   
   # trim extreme values and replace old columns
   mutate(across(c(all_of(variables), los), 
@@ -1182,7 +1183,7 @@ mimic_icu_cohort_select <- mimic_icu_cohort %>%
   select(all_of(variables), los) %>%
   
   # remove missing values
-  drop_na() %>%
+  filter(across(c(all_of(variables), los), ~ !is.na(.))) %>%
   
   # trim extreme values and replace old values
   mutate(across(c(all_of(variables), los), 
@@ -1215,7 +1216,7 @@ I will use the bar plot to show the proportion of ICU stays by the first ICU.
 # count the number of ICU stays and plot the bar plot
 mimic_icu_cohort %>%
   count(first_careunit) %>%
-  ggplot(aes(x = "", y = n, fill = first_careunit)) +
+  ggplot(aes(x = first_careunit, y = n, fill = first_careunit)) +
   geom_bar(width = 1, stat = "identity", color = "white") +
   
   labs(title = "Proportion of ICU Stays by First ICU",
@@ -1225,6 +1226,8 @@ mimic_icu_cohort %>%
   
   # add the percentage labels
   scale_y_continuous(labels = scales::percent_format(scale = 1)) +
-  theme_minimal() 
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
 
 ```
