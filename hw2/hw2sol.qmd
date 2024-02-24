@@ -487,6 +487,25 @@ system("gzip -d -k ~/mimic/icu/chartevents.csv.gz")
 ```
 
 Then, I want to use the `arrow::open_dataset` method to ingest the CSV file, select columns, and filter rows based on `itemid`, because the speed of `arrow::open_dataset` is fast and it can handle large datasets efficiently.
+```{r}
+parquet_file_path <- "~/mimic/hosp/labevents.parquet"
+
+# Rewrite the CSV file in Parquet format    
+arrow::write_dataset(arrow::open_dataset(file_path, format = "csv"), 
+                     parquet_file_path, format = "parquet")
+
+parquet_file_path_2 <- "~/mimic/icu/chartevents.parquet"
+arrow::write_dataset(arrow::open_dataset(file_path_3, format = "csv"), 
+                     parquet_file_path_2, format = "parquet")
+```
+
+```{r}
+```
+
+Finally, displaying the number of rows and the first 10 rows of the result tibble. There are 22502319 rows in the result tibble.
+
+```{r}
+```
 
 ```{r}
 #| eval: true
