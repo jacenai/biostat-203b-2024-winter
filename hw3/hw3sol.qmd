@@ -79,7 +79,7 @@ zcat < ~/mimic/hosp/patients.csv.gz | head
 zcat < ~/mimic/hosp/admissions.csv.gz | head
 ```
 
-\(2\) read the `patients.csv.gz` and `admissions.csv.gz` by `read_csv` and `filter` the patient with `subject_id` 10013310. And then get the demographic information of the patient.
+\(2\) read the `patients.csv.gz` and `admissions.csv.gz` by `read_csv` and `filter` the patient with `subject_id` 10013310. And then get the demographic information of the patient. Here I found that the `race` column in `admissions.csv.gz` is in upper case which is different from the example. So, I lower case the `race` column.
 
 ```{r}
 #| eval: true
@@ -89,7 +89,9 @@ race <- read_csv("~/mimic/hosp/admissions.csv.gz") %>%
 
 demographics <- read_csv("~/mimic/hosp/patients.csv.gz") %>%
   filter(subject_id == 10013310) %>%
-  mutate(race = tolower(race$race))  # Lower case the race column
+  
+  # Lower case the race column
+  mutate(race = tolower(race$race))  
 ```
 
 **Step II**: getting the top 3 diagnoses of the patient
@@ -113,11 +115,15 @@ top_3_diagnoses <- read_csv("~/mimic/hosp/diagnoses_icd.csv.gz") %>%
                    "icd_version" = "icd_version")) %>%
   
   group_by(long_title) %>%
+  
   # Count the frequency of each diagnosis
   summarise(freq = n()) %>%
+  
   # Select the top 3 diagnoses
   arrange(desc(freq)) %>%
-  slice(1:3)
+  slice(1:3) 
+
+top_3_diagnoses
 ```
 
 **Step III**: getting the ADT history of the patient
@@ -133,10 +139,12 @@ zcat < ~/mimic/hosp/transfers.csv.gz | head
 
 ```{r}
 #| eval: true
+
 # read the transfers.csv.gz and filter the patient 10013310
 ADT <- read_csv("~/mimic/hosp/transfers.csv.gz") %>%
   filter(subject_id == 10013310) %>%
   filter(!is.na(careunit)) %>%
+  
   # Add a new column segment_thickness 
   # to represent the size of the line segment
   mutate(segment_thickness = if_else(
@@ -183,13 +191,17 @@ ln -s ~/mimic/hosp/labevents.parquet/
 
 ```{r}
 #| eval: true
+
 # read the labevents.parquet file
 labevents <- arrow::open_dataset('./labevents_pq', 
                                  format = "parquet") %>%
+  
   # Select the subject_id and charttime columns
   dplyr::select(subject_id, charttime) %>%
+  
   # Filter the patient 10013310
   dplyr::filter(subject_id == 10013310) %>%
+  
   # get rid of the duplicated charttime values
   dplyr::distinct(subject_id, charttime) %>%
   collect()
@@ -205,21 +217,24 @@ zcat < ~/mimic/hosp/procedures_icd.csv.gz | head
 zcat < ~/mimic/hosp/d_icd_procedures.csv.gz | head
 ```
 
-\(2\) read the `procedures_icd.csv.gz` and `d_icd_procedures.csv.gz` by `read_csv` and `filter` the patient with `subject_id` 10013310. Combine the two tables by `left_join`.
+\(2\) read the `procedures_icd.csv.gz` and `d_icd_procedures.csv.gz` by `read_csv` and `filter` the patient with `subject_id` 10013310. Combine the two tables using `left_join` by the `icd_code` and `icd_version` columns.
 
 ```{r}
 #| eval: true
+
 # read the procedures_icd.csv.gz and d_icd_procedures.csv.gz
 procedures <- read_csv("~/mimic/hosp/procedures_icd.csv.gz") %>%
   filter(subject_id == 10013310) %>%
+  
+  # Combine the two tables by left_join
   left_join(read_csv("~/mimic/hosp/d_icd_procedures.csv.gz"), 
             by = c("icd_code" = "icd_code", 
                    "icd_version" = "icd_version"))
 ```
 
-**Step VI**: getting the plot by `ggplot2`.
+**Step VI**: getting the ADT_history plot by `ggplot2`.
 
-I use the `ggplot` function to create a new plot. I use the `scale_x_datetime` function to specify the x axis limits, the `scale_y_discrete` function to specify the y axis with 3 levels, the `geom_point` function to add procedure events, the `scale_shape_manual` function to manually set the number of shapes according to the number of titles. Also, I use the `geom_segment` function to add ADT history, the `geom_point` function to add lab events, and the `geom_text` function to add diagnosis events. Finally, I use the `theme` function to set the theme of the plot.
+First, I use the `ggplot` function to create a new plot. Then, I use the `scale_x_datetime` function to specify the x axis limits, the `scale_y_discrete` function to specify the y axis with 3 levels, the `geom_point` function to add procedure events, the `scale_shape_manual` function to manually set the number of shapes according to the number of titles. Also, I use the `geom_segment` function to add ADT history, the `geom_point` function to add lab events, and the `geom_text` function to add diagnosis events. Finally, I use the `theme` function to set the theme of the plot.
 
 ```{r}
 #| eval: true
@@ -227,6 +242,7 @@ ADT_history <- ggplot() +
   
   # Specify x axis limits
   scale_x_datetime(name = "Calendar Time", 
+                   
                    # minus 1 day from the minimum intime 
                    # to display all the data
                    limits = c(min(ADT$intime) - days(1), 
@@ -238,9 +254,12 @@ ADT_history <- ggplot() +
   
   # Add procedure events
   geom_point(data = procedures, 
+             
+             # change the format of chartdate
              aes(x = as.POSIXct(chartdate), 
                  y = "Procedure", 
-                 # Get shorter title using regex
+                 
+                 # Get shorter title using regular expression
                  shape = sub(",.*", "", long_title)),
              size = 3) + 
   
@@ -259,6 +278,8 @@ ADT_history <- ggplot() +
                    y = "ADT", 
                    yend = "ADT", 
                    color = careunit, 
+                   
+                   # define the thickness of the segment
                    size = segment_thickness)) +
   
   # Set legend position and arrangement
@@ -274,7 +295,8 @@ ADT_history <- ggplot() +
                               keywidth = 1),
          shape = guide_legend(title = "Procedure", 
                               ncol = 2),
-         # Remove legend for ADT
+         
+         # Remove ADT's legend
          size = FALSE) +
   
   # Add patient information as title and subtitle
@@ -288,7 +310,7 @@ ADT_history <- ggplot() +
                         sep = "\n"))
   
 # Print the plot
-print(ADT_history)
+ADT_history
 ```
 
 ### Q1.2 ICU stays
@@ -322,9 +344,11 @@ Read the `d_items.csv.gz` and `chartevents.csv.gz` by `read_csv` and `filter` th
 
 ```{r}
 #| eval: true
+
 # read the d_items.csv.gz
 items <- read_csv("~/mimic/icu/d_items.csv.gz") %>%
   dplyr::select(c(itemid, label, abbreviation)) %>%
+  
   # filter the abbreviation with HR, NBPd, NBPs, RR, Temperature F
   dplyr::filter(abbreviation %in% c("HR", "NBPd", 
                                     "NBPs", "RR", 
@@ -336,12 +360,15 @@ file_path_chartevents <- "~/mimic/icu/chartevents.csv"
 # read the chartevents.csv.gz
 chartevents <- arrow::open_dataset(file_path_chartevents, 
                                    format = "csv") %>%
+  
   # filter out ids number of interested vitals
   dplyr::filter(itemid %in% c(220045, 220179, 
                               220180, 220210, 
                               223761)) %>%
+  
   # filter the patient with subject_id 10013310
   dplyr::filter(subject_id == 10013310) %>%
+  
   # exclude unnecessary columns
   dplyr::select(-c(hadm_id, caregiver_id, storetime, warning)) %>%
   collect() %>%
@@ -349,6 +376,8 @@ chartevents <- arrow::open_dataset(file_path_chartevents,
 ```
 
 \(4\) plot the data.
+
+To plot the data, use `ggplot` and `geom_point` to add points, `geom_line` to add lines, `facet_grid` to show all combinations of abbreviation and stay_id, `labs` to add title and axis labels, `theme_light` to set the theme, and `guides` to avoid overlapping of the x-axis labels.
 
 ```{r}
 #| eval: true
@@ -358,6 +387,7 @@ vitals_line_plot <- ggplot(chartevents,
                                color = abbreviation)) +
   geom_point() +
   geom_line() +
+  
   # use facet_grid to show all 
   # combinations of abbreviation and stay_id
   facet_grid(abbreviation ~ stay_id, scales = "free") +
@@ -368,13 +398,16 @@ vitals_line_plot <- ggplot(chartevents,
        y = "") +
   
   theme_light(base_size = 9) +
+  
   # remove legend
   theme(legend.position = "none") +
+  
   # To avoid overlapping of the x-axis labels, 
   # using guides with n.dodge = 2
   guides(x = guide_axis(n.dodge = 2)) 
 
-print(vitals_line_plot)
+# print the plot
+vitals_line_plot
 ```
 
 ## Q2. ICU stays
@@ -387,9 +420,9 @@ zcat < ~/mimic/icu/icustays.csv.gz | head
 
 ### Q2.1 Ingestion
 
-**Answer**
-
 Import `icustays.csv.gz` as a tibble `icustays_tble`.
+
+**Answer**
 
 ```{r}
 #| eval: true
@@ -442,7 +475,7 @@ icustays_tble %>%
   ggplot(aes(x = num_icu_stays)) +
   geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
   labs(title = "Distribution of ICU Stays per Subject",
-       x = "Number of ICU Stays per `subject_id`",
+       x = "Number of ICU stays per subject",
        y = "Frequency") +
   theme_minimal()
 ```
@@ -459,10 +492,13 @@ zcat < ~/mimic/hosp/admissions.csv.gz | head
 
 Import `admissions.csv.gz` as a tibble `admissions_tble`.
 
+**Answer**
+
 ```{r}
 #| eval: true
-admissions_tble <- arrow::open_dataset("~/mimic/hosp/admissions.csv.gz", 
-                                       format = "csv") %>%
+admissions_tble <- arrow::open_dataset(
+  "~/mimic/hosp/admissions.csv.gz",
+  format = "csv") %>%
   collect()
 ```
 
@@ -576,12 +612,15 @@ This may be due to the fact that most patients are admitted for short-term care,
 
 ```{r}
 #| eval: true
+
+# standardize the time zone and calculate the length of stay
 length_of_stay <- admissions_tble %>%
   mutate(dischtime = with_tz(dischtime, "UTC")) %>%
   mutate(admittime = with_tz(admittime, "UTC")) %>%
   mutate(length_of_stay = as.numeric(
     difftime(dischtime, admittime, units = "days")))
 
+# plot the length of hospital stay
 length_of_stay %>%
   ggplot(aes(x = length_of_stay)) +
   geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
@@ -603,14 +642,15 @@ zcat < ~/mimic/hosp/patients.csv.gz | head
 
 Import `patients.csv.gz` (<https://mimic.mit.edu/docs/iv/modules/hosp/patients/>) as a tibble `patients_tble`.
 
-**Answer** Import `patients.csv.gz` as a tibble `patients_tble`.
+**Answer**
+
+Import `patients.csv.gz` as a tibble `patients_tble`.
 
 ```{r}
 #| eval: true
 patients_tble <- arrow::open_dataset(
   sources = "~/mimic/hosp/patients.csv.gz", 
-  format = "csv"
-) %>%
+  format = "csv") %>%
   dplyr::collect()
 ```
 
@@ -624,7 +664,7 @@ Summarize variables `gender` and `anchor_age` by graphics, and explain any patte
 
 -   Pattern:
 
-According to the pie chart, there are more male than female patients.
+According to the pie chart, there are more female than male patients. And according to the bar chart, in each age group, it shows the same pattern.
 
 -   Explanation:
 
@@ -640,14 +680,25 @@ gender_summary <- patients_tble %>%
   mutate(percentage = n / sum(n) * 100)
 
 # plot the pie chart
-ggplot(gender_summary, aes(x = "", y = percentage, fill = gender)) +
+ggplot(gender_summary, aes(x = "", y = percentage, 
+                           fill = gender)) +
   geom_bar(stat = "identity", width = 1) +
   geom_text(aes(label = paste0(round(percentage), "%")), 
             position = position_stack(vjust = 0.5)) +
+  
   # use coord_polar to make the pie chart
   coord_polar(theta = "y") +
   labs(title = "Distribution of Gender", fill = "Gender") +
   theme_void()
+
+# plot the bar chart
+patients_tble %>%
+  ggplot(aes(x = anchor_age, fill = gender)) +
+  geom_bar() +
+  labs(title = "Distribution of age",
+       x = "Age",
+       y = "Density") +
+  theme_minimal()
 ```
 
 **(2) `anchor_age`**:
@@ -748,7 +799,7 @@ Here I use the `left_join` function to join the `labevents_tble` with `icustays_
 # to save my rendering time
 if (file.exists("labevents_tble.rds")) {
   
-  # If the file exists, load it
+  # If the file exists, print it
   labevents_tble <- read_rds("labevents_tble.rds") %>% 
     print(width = Inf)
 } else {
@@ -761,7 +812,7 @@ if (file.exists("labevents_tble.rds")) {
               by = "subject_id") %>%
     
     # make sure the lab measurement is before the ICU stay
-    filter(storetime < intime) %>%
+    filter(storetime <= intime) %>%
     group_by(subject_id, stay_id, itemid) %>%
     
     # sort by storetime and keep the last measurement
@@ -836,7 +887,7 @@ d_items_tble <- arrow::open_dataset("~/mimic/icu/d_items.csv.gz",
 
 **Step 2**: Load the `chartevents.csv.gz` file and filter the rows to keep the `itemid` for the vitals of interest.
 
-Here, I select the `subject_id`, `itemid`, `charttime`, and `valuenum`, which are the columns of interest. The 'subject_id' and 'itemid' are preparation for the next step. 'charttime' will be used to filter the charted events within the ICU stay.
+Here, I select the `subject_id`, `itemid`, `charttime`, and `valuenum`, which are the columns of interest. The `subject_id` and `itemid` are preparation for the next step. `charttime` will be used to filter the charted events within the ICU stay.
 
 ```{r}
 #| eval: true
@@ -854,7 +905,7 @@ chartevents <- arrow::open_dataset('./chartevents_pq',
 
 **Step 3**: Left join `chartevents` with `icustays_tble` to get `stay_id` and `intime`. Then, filter the charted events within the ICU stay. Keep the first measurement for each `subject_id` and `itemid`.
 
-Here, I use `ledt_join` function to join the `chartevents` with `icustays_tble` to get `stay_id` and `intime`. Then, I filter the charted events within the ICU stay. I use `group_by` and `arrange` functions to keep the first measurement for each `subject_id` and `itemid`. Also, I use filter function to keep the `charttime` within the ICU stay. And I use `slice_head` function to keep the first measurement for each `subject_id` and `itemid`. Finally, I use `select` function to keep the columns of interest, use `pivot_wider` function to convert the form of the `itemid` from long to wide format, and use `rename` function to use the more meaningful names by renaming the columns.
+Here, I use `left_join` function to join the `chartevents` with `icustays_tble` to get `stay_id` and `intime`. Then, I filter the charted events within the ICU stay. I use `group_by` and `arrange` functions to keep the first measurement for each `subject_id` and `itemid`. Also, I use filter function to keep the `charttime` within the ICU stay. And I use `slice_head` function to keep the first measurement for each `subject_id` and `itemid`. Finally, I use `select` function to keep the columns of interest, use `pivot_wider` function to convert the form of the `itemid` from long to wide format, and use `rename` function to use the more meaningful names by renaming the columns.
 
 ```{r}
 #| eval: true
@@ -871,7 +922,8 @@ if (file.exists("chartevents_tble.rds")) {
   
   # If the file doesn't exist, create the chartevents_tble
   
-  # Left join chartevents with icustays_tble to get stay_id and intime
+  # Left join chartevents with icustays_tble 
+  # to get stay_id, intime, and outtime
   chartevents_tble <- chartevents %>%
     left_join(icustays_tble %>% select(subject_id, 
                                        stay_id, 
@@ -1012,7 +1064,7 @@ mimic_icu_cohort %>%
 
 **(1.3)** Length of ICU stay `los` vs marital_status
 
-Using the violin plot to show the summary of the length of ICU stay by marital status
+Using the violin plot to show the summary of the length of ICU stay by marital status. And also, adding the points to show the distribution of the length of ICU stay.
 
 ```{r}
 #| eval: true
@@ -1068,8 +1120,8 @@ mimic_icu_cohort %>%
   theme_minimal()
 ```
 
-**(2)** Length of ICU stay `los` vs the last available lab measurements before ICU stay
-I will dot plot to show the relationship between the length of ICU stay and each last available lab measurements before ICU stay.
+**(2)** Length of ICU stay `los` vs the last available lab measurements before ICU stay I will dot plot to show the relationship between the length of ICU stay and each last available lab measurements before ICU stay.
+
 ```{r}
 #| eval: true
 
@@ -1156,6 +1208,7 @@ plots
 \(4\) Length of ICU stay `los` vs first ICU
 
 I will use the bar plot to show the proportion of ICU stays by the first ICU.
+
 ```{r}
 #| eval: true
 
