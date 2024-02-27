@@ -42,6 +42,7 @@ library(DBI)
 library(gt)
 library(gtsummary)
 library(tidyverse)
+library(dplyr)
 ```
 
 ## Q1. Compile the ICU cohort in HW3 from the Google BigQuery database 
@@ -59,6 +60,7 @@ bq_auth(path = satoken)
 ```
 Connect to BigQuery database `mimic4_v2_2` in GCP (Google Cloud Platform), using the project billing account `biostat-203b-2024-winter`.
 ```{r}
+#| eval: true
 # connect to the BigQuery database `biostat-203b-2024-winter.mimic4_v2_2`
 con_bq <- dbConnect(
     bigrquery::bigquery(),
@@ -70,12 +72,14 @@ con_bq
 ```
 List all tables in the `mimic4_v2_2` database.
 ```{r}
+#| eval: true
 dbListTables(con_bq)
 ```
 ### Q1.2 `icustays` data
 
 Connect to the `icustays` table.
 ```{r}
+#| eval: true
 # full ICU stays table
 icustays_tble <- tbl(con_bq, "icustays") |>
   # show_query() |>
@@ -86,24 +90,60 @@ icustays_tble <- tbl(con_bq, "icustays") |>
 
 Connect to the `admissions` table.
 ```{r}
-# # TODO
-# admissions_tble <- 
+#| eval: true
+# full admissions table
+admissions_tble <- tbl(con_bq, "admissions") |>
+  # show_query() |>
+  print(width = Inf)
 ```
 
 ### Q1.4 `patients` data
 
 Connect to the `patients` table.
 ```{r}
-# # TODO
-# patients_tble <-
+# full patients table
+patients_tble <- tbl(con_bq, "patients") |>
+  # show_query() |>
+  print(width = Inf)
 ```
 
 ### Q1.5 `labevents` data
 
 Connect to the `labevents` table and retrieve a subset that only contain subjects who appear in `icustays_tble` and the lab items listed in HW3. Only keep the last lab measurements before the ICU stay and pivot lab items to become variables/columns. Write all steps in _one_ chain of pipes.
+
+creatinine (50912), potassium (50971), sodium (50983), chloride (50902), bicarbonate (50882), hematocrit (51221), white blood cell count (51301), and glucose (50931)
 ```{r}
-# # TODO
-# labevents_tble <- 
+# 
+
+labevents_tble <- tbl(con_bq, "labevents") |>
+  # filter subjects contained in icustays_tble
+  semi_join(icustays_tble, by = "subject_id") |>
+  # filter lab items listed in HW3
+  filter(itemid %in% c(50912, 50971, 
+                       50983, 50902, 
+                       50882, 51221, 
+                       51301, 50931)) |>
+  # keep the last lab measurements before the ICU stay
+  # first, inner join with icustays_tble
+  left_join(icustays_tble, by = c("hadm_id", "subject_id")) |>
+  # then, filter the last lab measurements before the ICU stay
+  filter(storetime <= intime) |>
+  group_by(subject_id, hadm_id, stay_id, itemid) |> #每个人，每次入院，每次进ICU，每个lab item
+  # sort by storetime and keep the last measurement
+  slice_max(order_by = storetime, n = 1) |>
+  ungroup() |>
+  select(subject_id, itemid, valuenum) |>
+
+  pivot_wider(names_from = itemid, values_from = valuenum) |>
+  rename(creatinine = `50912`, 
+         potassium = `50971`, 
+         sodium = `50983`,
+         chloride = `50902`,
+         bicarbonate = `50882`,
+         hematocrit = `51221`,
+         white_blood_cell_count = `51301`,
+         glucose = `50931`) |>
+  print(width = Inf)
 ```
 
 ### Q1.6 `chartevents` data
