@@ -184,7 +184,8 @@ Also, I create a symbolic link for the original directory to the Parquet file `l
 
 ```{bash}
 #| eval: false
-ln -s ~/mimic/hosp/labevents.parquet/
+ln -s ~/mimic/hosp/labevents.parquet/ ./labevents_pq
+
 ```
 
 \(4\) Reading the `labevents.parquet` file using the `arrow::open_dataset`. The information I need is the `subject_id` and `charttime` columns. So, I use the `dplyr::select` function to select these two columns and the `dplyr::filter` function to filter the `subject_id` 10013310. Also, there are duplicated `charttime` values because several lab events can happen at the same time, so I use the `dplyr::distinct` function to keep the unique `charttime` values.
@@ -837,7 +838,7 @@ if (file.exists("labevents_tble.rds")) {
            white_blood_cell_count = `51301`, 
            glucose = `50931`) %>%
     
-    print(width, Inf) %>%
+    print(width = Inf) %>%
     write_rds("labevents_tble.rds")
 }
 
@@ -869,7 +870,7 @@ I create a symbolic link for the original directory to the Parquet file `chartev
 
 ```{bash}
 #| eval: false
-ln -s ~/mimic/icu/chartevents.parquet/
+ln -s ~/mimic/icu/chartevents.parquet/ ./chartevents_pq
 ```
 
 **Step 1**: Load the `d_items.csv.gz` file and filter the rows to keep the `itemid` for the vitals of interest.
@@ -1127,11 +1128,11 @@ mimic_icu_cohort %>%
 #| eval: true
 
 # prepare the variables to be used in the plot
-variables <- c("white_blood_cell_count", 
-               "heart_rate", "respiratory_rate", 
-               "temperature_in_Fahrenheit", 
-               "systolic_non_invasive_blood_pressure", 
-               "diastolic_non_invasive_blood_pressure")
+variables <- c("potassium", "sodium", 
+               "chloride", "bicarbonate", 
+               "hematocrit", 
+               "white_blood_cell_count", 
+               "glucose") 
 
 # get the last lab measurements before ICU stay
 mimic_icu_cohort_select <- mimic_icu_cohort %>%
