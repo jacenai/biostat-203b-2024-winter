@@ -49,6 +49,7 @@ library(gtsummary)
 library(tidyverse)
 library(dplyr)
 library(stringr)
+library(shiny)
 ```
 
 ## Q1. Compile the ICU cohort in HW3 from the Google BigQuery database
@@ -92,6 +93,8 @@ dbListTables(con_bq)
 
 Connect to the `icustays` table.
 
+#### Answer
+
 ```{r}
 #| eval: true
 # full ICU stays table
@@ -103,6 +106,8 @@ icustays_tble <- tbl(con_bq, "icustays") |>
 ### Q1.3 `admissions` data
 
 Connect to the `admissions` table.
+
+#### Answer
 
 ```{r}
 #| eval: true
@@ -116,6 +121,8 @@ admissions_tble <- tbl(con_bq, "admissions") |>
 
 Connect to the `patients` table.
 
+#### Answer
+
 ```{r}
 #| eval: true
 # full patients table
@@ -128,7 +135,8 @@ patients_tble <- tbl(con_bq, "patients") |>
 
 Connect to the `labevents` table and retrieve a subset that only contain subjects who appear in `icustays_tble` and the lab items listed in HW3. Only keep the last lab measurements before the ICU stay and pivot lab items to become variables/columns. Write all steps in *one* chain of pipes.
 
-**Answer** From HW3, the lab items listed are: creatinine (50912), potassium (50971), sodium (50983), chloride (50902), bicarbonate (50882), hematocrit (51221), white blood cell count (51301), and glucose (50931)
+#### Answer
+From HW3, the lab items listed are: creatinine (50912), potassium (50971), sodium (50983), chloride (50902), bicarbonate (50882), hematocrit (51221), white blood cell count (51301), and glucose (50931)
 
 ```{r}
 #| eval: true
@@ -190,13 +198,16 @@ labevents_tble <- tbl(con_bq, "labevents") |>
   
   # print the result
   print(width = Inf)
+
+# count(labevents_tble)
 ```
 
 ### Q1.6 `chartevents` data
 
 Connect to `chartevents` table and retrieve a subset that only contain subjects who appear in `icustays_tble` and the chart events listed in HW3. Only keep the first chart events during ICU stay and pivot chart events to become variables/columns. Write all steps in *one* chain of pipes.
 
-**Answer** The vitals for ICU patients from HW3 are: heart rate (220045), systolic non-invasive blood pressure (220179), diastolic non-invasive blood pressure (220180), body temperature in Fahrenheit (223761), and respiratory rate (220210)
+#### Answer 
+The vitals for ICU patients from HW3 are: heart rate (220045), systolic non-invasive blood pressure (220179), diastolic non-invasive blood pressure (220180), body temperature in Fahrenheit (223761), and respiratory rate (220210)
 
 ```{r}
 #| eval: true
@@ -252,11 +263,16 @@ chartevents_tble <- tbl(con_bq, "chartevents") |>
   
   # print the result
   print(width = Inf)
+
+# count(chartevents_tble)
+
 ```
 
 ### Q1.7 Put things together
 
 This step is similar to Q7 of HW3. Using *one* chain of pipes `|>` to perform following data wrangling steps: (i) start with the `icustays_tble`, (ii) merge in admissions and patients tables, (iii) keep adults only (age at ICU intime \>= 18), (iv) merge in the labevents and chartevents tables, (v) `collect` the tibble.
+
+#### Answer
 
 ```{r}
 #| eval: true
@@ -274,23 +290,22 @@ mimic_icu_cohort <- icustays_tble |>
            year(intime) - anchor_year + anchor_age) |>
 
   # keep age at ICU intime >= 18
-  filter(age_intime >= 18) |>
+  filter(age_intime >= 18L) |>
 
+  # merge in the chartevents by subject_id and stay_id
+  left_join(chartevents_tble, by = c("subject_id", "stay_id")) |>
+  
   # merge in the labevents by subject_id and stay_id
   left_join(labevents_tble, by = c("subject_id", "stay_id")) |>
-  arrange(subject_id, stay_id) |>
+  
+  # collect the tibble
+  collect() |>
 
-  # # merge in the chartevents by subject_id and stay_id
-  # left_join(chartevents_tble, by = c("subject_id", "stay_id")) |>
-  # 
-  # # collect the tibble
-  # collect() |>
-  # 
-  # # arrange by subject_id, hadm_id, and stay_id for display
-  # arrange(subject_id, hadm_id, stay_id) |>
-  # 
-  # # print the result
-   print(width = Inf)
+  # arrange by subject_id, hadm_id, and stay_id for display
+  arrange(subject_id, hadm_id, stay_id) |>
+
+  # print the result
+  print(width = Inf)
 
 ```
 
@@ -299,20 +314,14 @@ mimic_icu_cohort <- icustays_tble |>
 Perform the following preprocessing steps. (i) Lump infrequent levels into "Other" level for `first_careunit`, `last_careunit`, `admission_type`, `admission_location`, and `discharge_location`. (ii) Collapse the levels of `race` into `ASIAN`, `BLACK`, `HISPANIC`, `WHITE`, and `Other`. (iii) Create a new variable `los_long` that is `TRUE` when `los` is greater than or equal to 2 days. (iv) Summarize the data using `tbl_summary()`, stratified by `los_long`. Hint: `fct_lump` and `fct_collapse` from the `forcats` package can be useful.
 
 Hint: Below is a numerical summary of my tibble after preprocessing:
+```{html}
+<iframe width=95% height="500" src="./mimic_icu_cohort_gtsummary.html"></iframe>
+```
 
-<iframe width="95%" height="500" src="./mimic_icu_cohort_gtsummary.html">
-</iframe>
-
-**Answer** 
+#### Answer
 
 ```{r}
 #| eval: true
-
-#first, get to know the levels of race
-mimic_icu_cohort |>
-  select(race) |>
-  distinct() |>
-  print()
 
 mimic_icu_cohort_summary <- mimic_icu_cohort |>
   
@@ -362,10 +371,9 @@ mimic_icu_cohort_summary <- mimic_icu_cohort |>
   mutate(los_long = los >= 2) |>
   
   # summarize the data using tbl_summary(), stratified by los_long
-  tbl_summary(by = los_long) |>
+  tbl_summary(by = los_long) 
   
-  # print the result
-  print()
+mimic_icu_cohort_summary
 ```
 
 
@@ -399,3 +407,138 @@ Although it is not a good practice to add big data files to git, for grading pur
 ## Q2. Shiny app
 
 Develop a Shiny app for exploring the ICU cohort data created in Q1. The app should reside in the `mimiciv_shiny` folder. The app should contain at least two tabs. One tab provides easy access to the graphical and numerical summaries of variables (demographics, lab measurements, vitals) in the ICU cohort. The other allows user to choose a specific patient in the cohort and display the patient's ADT and ICU stay information as we did in Q1 of HW3.
+
+#### Answer
+```{r}
+#| eval: true
+# read the demogeaphic data
+
+```
+
+```{r}
+#| eval: true
+# create a new shiny app
+ui <- fluidPage(
+  titlePanel("MIMIC-IV ICU Cohort"),
+  plotOutput("plot"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("summary", "Summary", 
+                  choices = c("Demographics", "Lab Measurements", "Vitals")),
+      conditionalPanel(
+        condition = "input.summary == 'Demographics'",
+        selectInput("demographics", "Demographics", 
+                    choices = c("age", "gender", "race", 
+                                "insurance", "marital_status", 
+                                "language"))
+      ),
+      conditionalPanel(
+        condition = "input.summary == 'Lab Measurements'",
+        selectInput("lab_measurements", "Lab Measurements",
+                    choices = c("sodium", "chloride", 
+                                "creatinine", "potassium", 
+                                "glucose", "bicarbonate"))
+      ),
+      conditionalPanel(
+        condition = "input.summary == 'Vitals'",
+        selectInput("vitals", "Vitals",
+                    choices = c("temperature_in_Fahrenheit", 
+                                "diastolic_non_invasive_blood_pressure",
+                                "respiratory_rate",
+                                "systolic_non_invasive_blood_pressure",
+                                "heart_rate"))
+      )
+    ),
+    mainPanel(
+      textOutput("selected_summary")
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  
+  output$selected_summary <- renderText({
+    mimic <- switch(input$summary,
+           "Demographics" = mimic_icu_cohort[, input$demographics],
+           "Lab Measurements" = "Selected summary: Lab Measurements",
+           "Vitals" = "Selected summary: Vitals")
+  })
+  
+  observe({
+    if (input$summary == "Demographics") {
+      output$demographics <- renderUI({
+        selectInput("demographics", "Demographics", 
+                    choices = c("age", "
+
+shinyApp(ui = ui, server = server)
+```
+
+
+```{r}
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  output$selected_summary <- renderText({
+    switch(input$summary,
+           "Demographics" = "Selected summary: Demographics",
+           "Lab Measurements" = "Selected summary: Lab Measurements",
+           "Vitals" = "Selected summary: Vitals")
+  })
+  
+  observe({
+    if (input$summary == "Demographics") {
+      output$demographics <- renderUI({
+        selectInput("demographics", "Demographics", 
+                    choices = c("age", "gender", "race", 
+                                "insurance", "marital_status", 
+                                "language"))
+      })
+    } else {
+      output$demographics <- renderUI(NULL)
+    }
+    
+    if (input$summary == "Lab Measurements") {
+      output$lab_measurements <- renderUI({
+        selectInput("lab_measurements", "Lab Measurements",
+                    choices = c("sodium", "chloride", 
+                                "creatinine", "potassium", 
+                                "glucose", "bicarbonate"))
+      })
+    } else {
+      output$lab_measurements <- renderUI(NULL)
+    }
+    
+    if (input$summary == "Vitals") {
+      output$vitals <- renderUI({
+        selectInput("vitals", "Vitals",
+                    choices = c("temperature_in_Fahrenheit",
+                                "diastolic_non_invasive_blood_pressure",
+                                "respiratory_rate",
+                                "systolic_non_invasive_blood_pressure",
+                                "heart_rate"))
+      })
+    } else {
+      output$vitals <- renderUI(NULL)
+    }
+  })
+  
+  data <- readRDS("mimiciv_shiny/mimic_icu_cohort.rds")
+  
+  output$plot <- renderPlot({
+    if (input$summary == "age") {
+      ggplot(data, aes(x = age_intime)) +
+        geom_histogram(binwidth = 10) +
+        labs(title = "Age Distribution",
+             x = "Age (years)",
+             y = "Frequency")
+    } else if (input$summary ==)
+               
+    
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
