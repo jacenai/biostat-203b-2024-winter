@@ -105,8 +105,18 @@ ui <- fluidPage(
                                  "temperature_in_Fahrenheit", 
                                  "diastolic_non_invasive_blood_pressure"
                                ))
-                 )
+                 ),
+                 
+                 # Input: Slider for the number of observations to generate ----
+                 sliderInput("n",
+                             "Number of observations:",
+                             value = 500,
+                             min = 1,
+                             max = 1001)
+                 
                ),
+               
+               
                
                # define the main panel for the first tab
                # and the output be plots
@@ -117,7 +127,7 @@ ui <- fluidPage(
     ),
     
     # design the second tab
-    tabPanel("One Patient's ADT & ICU Stay Information", 
+    tabPanel("Each Patient's ADT & ICU Stay Information", 
              
              # design the sidebar layout in the second tab
              sidebarLayout(
@@ -150,6 +160,8 @@ server <- function(input, output, session) {
   output$selected_summary <- renderPlot({
     req(input$summary)  # Ensure input$summary has a value
     
+    n <- input$n  # Store the number of observations
+    
     # In order to have different plots for different selections,
     # I used `switch` to select the plot based on input$summary
     plot1 <- switch(input$summary,
@@ -174,7 +186,21 @@ server <- function(input, output, session) {
                                y = "Count") +
                           theme_minimal() +
                           theme(axis.text.x = element_text(
-                            angle = 90, vjust = 0.5, hjust = 1)) 
+                            angle = 90, vjust = 0.5, hjust = 1))}
+                      
+                      else if (input$demographics == "age_intime") {
+                        ggplot(mimic_icu_cohort, 
+                               aes_string(x = input$demographics)) +
+                          geom_bar() +
+                          
+                          # set the x-axis limit to the number of observations
+                          # to avoid the long tail
+                          scale_x_continuous(limit = c(0, n)) +
+                          labs(title = "Demographics statistics", 
+                               x = input$demographics, 
+                               y = "Count") +
+                          theme_minimal()
+                        
                         
                         # otherwise, present the other demographics plots
                       } else {
@@ -203,6 +229,10 @@ server <- function(input, output, session) {
                       ggplot(mimic_icu_cohort_long, 
                              aes(x = variable, y = value)) +
                         geom_boxplot() +
+                        
+                        # Set the y-axis limit to the number of observations
+                        # so that the plot is not too crowded
+                        scale_y_continuous(limit = c(0, n)) +
                         labs(title = "Lab Measurements statistics", 
                              x = "Lab Measurements", y = "Value") +
                         theme_minimal()
@@ -214,6 +244,10 @@ server <- function(input, output, session) {
                       # Present the histogram of the selected vitals
                       ggplot(mimic_icu_cohort, 
                              aes_string(x = input$vitals)) +
+                        
+                        # set the x-axis limit to the number of observations
+                        # so that the plot is not too crowded
+                        scale_x_continuous(limits = c(0, n)) +
                         geom_histogram() +
                         labs(title = "Vitals statistics", 
                              x = input$vitals, y = "Count") +
