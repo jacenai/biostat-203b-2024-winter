@@ -1,8 +1,6 @@
 # Biostat 203B HW4 Shiny App for MIMIC-IV ICU Cohort
 # Author: Jiachen Ai, UID: 206182615
 
-
-
 # Load necessary libraries
 library(shiny)
 library(ggplot2)
@@ -13,8 +11,6 @@ library(dplyr)
 library(stringr)
 library(tidyverse)
 library(dqshiny)
-
-
 
 # Path to the service account token
 # Since the token is in the hw4 directory, 
@@ -31,27 +27,16 @@ con_bq <- dbConnect(
   dataset = "mimic4_v2_2",
   billing = "biostat-203b-2024-winter")
 
-
-
-
 # Load required data from BigQuery database in advance 
 # to avoid repeated queries
 race <- tbl(con_bq, "admissions")
-
 demographics <- tbl(con_bq, "patients") 
-
 diagnoses_names <- tbl(con_bq, "d_icd_diagnoses")
-
 top_3_diagnoses <- tbl(con_bq, "diagnoses_icd")
-
 ADT <- tbl(con_bq, "transfers")
-
 labevents <- tbl(con_bq, "labevents")
-
 icd_procedures <- tbl(con_bq, "d_icd_procedures")
-
 procedures <- tbl(con_bq, "procedures_icd")
-
 chartevents <- tbl(con_bq, "chartevents")
 
 # Since selection of items does not depend on the patient,
@@ -72,10 +57,6 @@ opts <- mimic_icu_cohort |>
   distinct() |> 
   pull() |>
   as.character()
-
-
-
-
 
 # Define UI for application
 ui <- fluidPage(
@@ -162,10 +143,6 @@ ui <- fluidPage(
   )
 )
 
-
-
-
-
 # Define server logic
 server <- function(input, output, session) {
   
@@ -198,9 +175,9 @@ server <- function(input, output, session) {
                           theme_minimal() +
                           theme(axis.text.x = element_text(
                             angle = 90, vjust = 0.5, hjust = 1)) 
-                      
+                        
                         # otherwise, present the other demographics plots
-                        } else {
+                      } else {
                         ggplot(mimic_icu_cohort, 
                                aes_string(x = input$demographics)) +
                           geom_bar() +
@@ -259,8 +236,6 @@ server <- function(input, output, session) {
     
     # transform the input patient_id into numeric
     patient_id <- as.numeric(input$patient_id)
-    
-    # filter the mimic_icu_cohort to get the ADT history
     
     # filter out the race info of the patient
     race <- race |>
@@ -332,7 +307,7 @@ server <- function(input, output, session) {
     procedures$chartdate <- as.POSIXct(procedures$chartdate)
     
     
-
+    
     # Plot the ADT history
     ggplot() +
       
@@ -449,10 +424,9 @@ server <- function(input, output, session) {
       # To avoid overlapping of the x-axis labels, 
       # using guides with n.dodge = 2
       scale_x_datetime(
-      guide = guide_axis(n.dodge = 2))
+        guide = guide_axis(n.dodge = 2))
   })
 }
-
 
 # Finally, run the application successfully
 shinyApp(ui = ui, server = server)
