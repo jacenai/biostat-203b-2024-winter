@@ -60,6 +60,8 @@ Below is an outline of steps. In this homework, we exclusively work with the Big
 
 Authenticate with BigQuery using the service account token. Please place the service account token (shared via BruinLearn) in the working directory (same folder as your qmd file). Do **not** add this token to your git repository.
 
+#### Answer
+
 ```{r}
 #| eval: true
 # path to the service account token 
@@ -161,11 +163,11 @@ labevents_tble <- tbl(con_bq, "labevents") |>
   left_join(icustays_tble, by = c("subject_id")) |>
   
   # then, filter the last lab measurements before the ICU stay
-  filter(storetime <= intime) |>
+  filter(storetime < intime) |>
 
-  # Since I want find the last lab measurements for 
+  # Since I want to find the last lab measurements for 
   # each patient, each time they enter hospital, 
-  # each ICU stay, and each lab item
+  # each ICU stay, and each lab item, I need to group them
   group_by(subject_id, stay_id, itemid) |> 
   
   # sort by storetime and keep the last measurement
@@ -230,11 +232,11 @@ chartevents_tble <- tbl(con_bq, "chartevents") |>
                                   "stay_id")) |>
   
   # then, filter the first chart events during ICU stay
-  filter(charttime >= intime, charttime <= outtime) |>
+  filter(charttime > intime, charttime < outtime) |>
   
   # Since I want find the first chart events for
   # each patient, each time they enter hospital,
-  # each ICU stay, and each chart item
+  # each ICU stay, and each chart item, I need to group them
   group_by(subject_id, stay_id, itemid) |>
   
   # sort by charttime and keep the first measurement
@@ -276,7 +278,11 @@ This step is similar to Q7 of HW3. Using *one* chain of pipes `|>` to perform fo
 
 ```{r}
 #| eval: true
+# (i) start with the icustays_tble
 mimic_icu_cohort <- icustays_tble |>
+  
+  
+  # (ii) merge in admissions and patients tables
   
   # merge in admissions table by subject_id and hadm_id
   left_join(admissions_tble, by = c("subject_id", 
@@ -284,19 +290,31 @@ mimic_icu_cohort <- icustays_tble |>
   
   # merge in patients table by subject_id
   left_join(patients_tble, by = "subject_id") |>
+  
+  
+  # (iii) keep adults only (age at ICU intime >= 18)
 
   # calculate age at ICU intime
   mutate(age_intime =
            year(intime) - anchor_year + anchor_age) |>
+  
+  # convert age_intime to integer for comparison
+  mutate(age_intime = as.integer(age_intime)) |>
 
   # keep age at ICU intime >= 18
-  filter(age_intime >= 18L) |>
-
-  # merge in the chartevents by subject_id and stay_id
-  left_join(chartevents_tble, by = c("subject_id", "stay_id")) |>
+  filter(age_intime >= 18) |>
+  
+  
+  # (iv) merge in the labevents and chartevents tables
   
   # merge in the labevents by subject_id and stay_id
   left_join(labevents_tble, by = c("subject_id", "stay_id")) |>
+  
+  # merge in the chartevents by subject_id and stay_id
+  left_join(chartevents_tble, by = c("subject_id", "stay_id")) |>
+  
+  
+  # (v) collect the tibble
   
   # collect the tibble
   collect() |>
@@ -315,7 +333,9 @@ Perform the following preprocessing steps. (i) Lump infrequent levels into "Othe
 
 Hint: Below is a numerical summary of my tibble after preprocessing:
 ```{html}
-<iframe width=95% height="500" src="./mimic_icu_cohort_gtsummary.html"></iframe>
+<iframe width=95% height="500" 
+src="./mimic_icu_cohort_gtsummary.html">
+  </iframe>
 ```
 
 #### Answer
@@ -341,6 +361,7 @@ mimic_icu_cohort_summary <- mimic_icu_cohort |>
          systolic_non_invasive_blood_pressure,
          heart_rate, age_intime) |>
   
+  
   # (i) lump infrequent levels into "Other" level
   
   # according to the hint, first_careunit, last_careunit, 
@@ -355,6 +376,7 @@ mimic_icu_cohort_summary <- mimic_icu_cohort |>
   mutate(across(c(admission_location),
                 ~ fct_lump_n(., n = 3, other_level = "Other"))) |>
   
+  
   # (ii) collapse the levels of race into 
   # ASIAN, BLACK, HISPANIC, WHITE, and Other
   
@@ -365,6 +387,7 @@ mimic_icu_cohort_summary <- mimic_icu_cohort |>
     str_detect(race, "HISPANIC") ~ "HISPANIC",
     str_detect(race, "WHITE") ~ "WHITE",
     TRUE ~ "Other")) |>
+  
   
   # (iii) create a new variable los_long that is TRUE when 
   # los is greater than or equal to 2 days
@@ -380,6 +403,8 @@ mimic_icu_cohort_summary
 ### Q1.9 Save the final tibble
 
 Save the final tibble to an R data file `mimic_icu_cohort.rds` in the `mimiciv_shiny` folder.
+
+#### Answer
 
 ```{r}
 #| eval: true
@@ -407,3 +432,6 @@ Although it is not a good practice to add big data files to git, for grading pur
 ## Q2. Shiny app
 
 Develop a Shiny app for exploring the ICU cohort data created in Q1. The app should reside in the `mimiciv_shiny` folder. The app should contain at least two tabs. One tab provides easy access to the graphical and numerical summaries of variables (demographics, lab measurements, vitals) in the ICU cohort. The other allows user to choose a specific patient in the cohort and display the patient's ADT and ICU stay information as we did in Q1 of HW3.
+
+### Answer
+I developed a Shiny app, called "app.R", for exploring the ICU cohort data. The app is in the `mimiciv_shiny` folder. 
