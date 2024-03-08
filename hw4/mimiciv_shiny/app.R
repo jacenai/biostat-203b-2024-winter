@@ -12,6 +12,9 @@ library(stringr)
 library(tidyverse)
 library(dqshiny)
 
+
+
+
 # Path to the service account token
 # Since the token is in the hw4 directory, 
 # I go back one directory by "../"
@@ -26,6 +29,8 @@ con_bq <- dbConnect(
   project = "biostat-203b-2024-winter",
   dataset = "mimic4_v2_2",
   billing = "biostat-203b-2024-winter")
+
+
 
 # Load required data from BigQuery database in advance 
 # to avoid repeated queries
@@ -51,12 +56,21 @@ items <- tbl(con_bq, "d_items") |>
 # Load MIMIC-IV cohort data
 mimic_icu_cohort <- read_rds("./mimic_icu_cohort.rds")
 
+# Count the number of unique patients in the MIMIC-IV ICU cohort
+# for the autocomplete input
+num_patients <- unique(mimic_icu_cohort$subject_id) |> length()
+
 # Get the unique patient IDs to be used in the autocomplete input
 opts <- mimic_icu_cohort |>
   select(subject_id) |> 
   distinct() |> 
   pull() |>
   as.character()
+
+
+
+
+
 
 # Define UI for application
 ui <- fluidPage(
@@ -111,8 +125,8 @@ ui <- fluidPage(
                  sliderInput("n",
                              "Number of observations:",
                              value = c(0, 500),
-                             min = 1,
-                             max = 1001)
+                             min = 0,
+                             max = 500)
                  
                ),
                
@@ -139,7 +153,7 @@ ui <- fluidPage(
                  # define the text input for patient ID
                  # and use autocomplete input
                  autocomplete_input("patient_id", "Patient ID", 
-                                    opts, max_options = 60000),
+                                    opts, max_options = num_patients),
                ),
                
                # define the main panel for the second tab
@@ -188,7 +202,11 @@ server <- function(input, output, session) {
                           theme(axis.text.x = element_text(
                             angle = 90, vjust = 0.5, hjust = 1))}
                       
+                      # if the user selects age_intime,
                       else if (input$demographics == "age_intime") {
+                        
+                        # then present the demographics bar plot
+                        # with x-axis limit to help zoom in
                         ggplot(mimic_icu_cohort, 
                                aes_string(x = input$demographics)) +
                           geom_bar() +
