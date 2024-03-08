@@ -107,10 +107,10 @@ ui <- fluidPage(
                                ))
                  ),
                  
-                 # Input: Slider for the number of observations to generate ----
+                 # Slider for the number of observations to generate
                  sliderInput("n",
                              "Number of observations:",
-                             value = 500,
+                             value = c(0, 500),
                              min = 1,
                              max = 1001)
                  
@@ -195,7 +195,7 @@ server <- function(input, output, session) {
                           
                           # set the x-axis limit to the number of observations
                           # to avoid the long tail
-                          scale_x_continuous(limit = c(0, n)) +
+                          scale_x_continuous(limit = c(n, n)) +
                           labs(title = "Demographics statistics", 
                                x = input$demographics, 
                                y = "Count") +
@@ -232,7 +232,7 @@ server <- function(input, output, session) {
                         
                         # Set the y-axis limit to the number of observations
                         # so that the plot is not too crowded
-                        scale_y_continuous(limit = c(0, n)) +
+                        scale_y_continuous(limit = c(n, n)) +
                         labs(title = "Lab Measurements statistics", 
                              x = "Lab Measurements", y = "Value") +
                         theme_minimal()
@@ -247,7 +247,7 @@ server <- function(input, output, session) {
                         
                         # set the x-axis limit to the number of observations
                         # so that the plot is not too crowded
-                        scale_x_continuous(limits = c(0, n)) +
+                        scale_x_continuous(limits = c(n, n)) +
                         geom_histogram() +
                         labs(title = "Vitals statistics", 
                              x = input$vitals, y = "Count") +
