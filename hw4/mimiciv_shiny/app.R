@@ -121,9 +121,9 @@ ui <- fluidPage(
                                ))
                  ),
                  
-                 # Slider for the number of observations to generate
+                 # Slider for the range of observations to generate
                  sliderInput("n",
-                             "Number of observations:",
+                             "Range of observations:",
                              value = c(0, 500),
                              min = 0,
                              max = 500)
