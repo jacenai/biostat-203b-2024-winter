@@ -314,10 +314,10 @@ mimic_icu_cohort <- icustays_tble |>
   collect() |>
 
   # arrange by subject_id, hadm_id, and stay_id for display
-  arrange(subject_id, hadm_id, stay_id) |>
+  arrange(subject_id, hadm_id, stay_id) 
 
   # print the result
-  print(width = Inf)
+  mimic_icu_cohort
 
 ```
 
@@ -340,7 +340,8 @@ src="./mimic_icu_cohort_gtsummary.html">
 mimic_icu_cohort_summary <- mimic_icu_cohort |>
   
   # preparation: select columns for tbl_summary
-  select(first_careunit, last_careunit, los,
+  select(subject_id, hadm_id, stay_id,
+         first_careunit, last_careunit, los,
          admission_type, admission_location, 
          discharge_location, insurance,
          language, marital_status,
@@ -385,12 +386,13 @@ mimic_icu_cohort_summary <- mimic_icu_cohort |>
   
   # (iii) create a new variable los_long that is TRUE when 
   # los is greater than or equal to 2 days
-  mutate(los_long = los >= 2) |>
+  mutate(los_long = los >= 2)
   
   # summarize the data using tbl_summary(), stratified by los_long
-  tbl_summary(by = los_long) 
+mimic_icu_cohort_summary_table <- mimic_icu_cohort_summary |>
+  tbl_summary(by = los_long)
   
-mimic_icu_cohort_summary
+mimic_icu_cohort_summary_table
 ```
 
 
@@ -407,7 +409,7 @@ if (!dir.exists("mimiciv_shiny")) {
   dir.create("mimiciv_shiny")
 }
 # save the final tibble
-mimic_icu_cohort |>
+mimic_icu_cohort_summary |>
   write_rds("mimiciv_shiny/mimic_icu_cohort.rds", compress = "gz")
 ```
 

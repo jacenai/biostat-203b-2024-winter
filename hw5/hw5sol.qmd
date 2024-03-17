@@ -1,0 +1,899 @@
+---
+title: "Biostat 203B Homework 5"
+subtitle: Due Mar 22 @ 11:59PM
+author: "Jiachen Ai and UID: 206182615"
+format:
+  html:
+    theme: cosmo
+    embed-resources: true
+    number-sections: false
+    toc: true
+    toc-depth: 4
+    toc-location: left
+    code-fold: false
+knitr:
+  opts_chunk: 
+    cache: false    
+    echo: true
+    fig.align: 'center'
+    fig.width: 12
+    fig.height: 4
+    message: FALSE
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+## Predicting ICU duration
+
+Using the ICU cohort `mimiciv_icu_cohort.rds` you built in Homework 4,
+develop at least three machine learning approaches (logistic regression
+with enet regularization, random forest, boosting, SVM, MLP, etc) plus a
+model stacking approach for predicting whether a patient's ICU stay will
+be longer than 2 days. You should use the `los_long` variable as the
+outcome. You algorithms can use patient demographic information (gender,
+age at ICU `intime`, marital status, race), ICU admission information
+(first care unit), the last lab measurements before the ICU stay, and
+first vital measurements during ICU stay as features. You are welcome to
+use any feature engineering techniques you think are appropriate; but
+make sure to not use features that are not available at an ICU stay's
+`intime`. For instance, `last_careunit` cannot be used in your
+algorithms.
+
+## Answer
+
+1.  Data preprocessing and feature engineering.
+
+```{r}
+#| eval: true
+# Load libraries
+library(gtsummary)
+library(tidyverse)
+library(tidymodels)
+library(dplyr)
+library(haven)
+library(recipes)
+library(GGally)
+library(ranger)
+library(xgboost)
+library(stacks)
+library(yardstick)
+library(purrr)
+library(vip)
+```
+
+First, load the data from Homework 4 and check the missing values of the
+data. Then, check the distribution of each variable. For categorical
+variables, I use a new category "Unknown" to get rid of missing values.
+For continuous variables, I use median to impute missing values.
+Finally, I summarize the data to check the distribution of each
+variable.
+
+```{r}
+#| eval: true
+# Load "mimiciv_icu_cohort.rds" data
+mimic_icu_cohort <- read_rds("mimic_icu_cohort.rds") |>
+  select(-last_careunit,
+         -dod,
+         -discharge_location,
+         -hospital_expire_flag,
+         -los)
+
+
+# Check missing values of the data
+colSums(is.na(mimic_icu_cohort))
+
+
+# Check the distribution of each continuous variable
+# and I found that most of the continuous variables are right-skewed
+# so I decide to use median to impute missing values later
+hist_data <- lapply(mimic_icu_cohort[, c("sodium", "chloride", "creatinine",
+                           "potassium", "glucose", "hematocrit",
+                           "white_blood_cell_count", "bicarbonate",
+                           "temperature_in_Fahrenheit", 
+                           "diastolic_non_invasive_blood_pressure",
+                           "systolic_non_invasive_blood_pressure",
+                           "respiratory_rate", "heart_rate",
+                           "age_intime")], function(x) {
+  data.frame(value = x)
+})
+
+names(hist_data) <- c("sodium", "chloride", "creatinine",
+                           "potassium", "glucose", "hematocrit",
+                           "white_blood_cell_count", "bicarbonate",
+                           "temperature_in_Fahrenheit", 
+                           "diastolic_non_invasive_blood_pressure",
+                           "systolic_non_invasive_blood_pressure",
+                           "respiratory_rate", "heart_rate",
+                           "age_intime")
+
+hist_data <- bind_rows(hist_data, .id = "variable")
+
+ggplot(hist_data, aes(x = value)) +
+  geom_density(kernel = "cosine", fill = "skyblue", alpha = 0.5) +
+  facet_wrap(~ variable, scales = "free") +
+  labs(x = "Value") +
+  theme_minimal()
+
+
+# Deal with categorical variables
+mimic_icu_cohort <- mimic_icu_cohort |>
+  
+  # For categorical variables "marital_status", 
+  # I use a new category "Unknown" to get rid of missing values
+  mutate(marital_status = 
+           ifelse(is.na(marital_status), "Unknown", marital_status)) |>
+  
+  # Make the categorical variables as factors to make it easier for modeling
+  mutate(marital_status = 
+           as.factor(marital_status)) |>
+  mutate(los_long = as.factor(los_long))
+
+
+# summarize the data
+mimic_icu_cohort |>
+  tbl_summary()
+```
+
+2.  Partition data into 50% training set and 50% test set. Stratify
+    partitioning according to `los_long`. For grading purpose, sort the
+    data by `subject_id`, `hadm_id`, and `stay_id` and use the seed
+    `203` for the initial data split. Below is the sample code.
+
+(1) Partition data into 50% training set and 50% test set.
+
+```{r}
+#| eval: true
+set.seed(203)
+
+# sort the data by subject_id, hadm_id, and stay_id
+mimic_icu_cohort <- mimic_icu_cohort |>
+  arrange(subject_id, hadm_id, stay_id) |>
+  select(-subject_id, -hadm_id, -stay_id)
+
+# partition data into 50% training set and 50% test set
+data_split <- initial_split(
+  mimic_icu_cohort, 
+  # stratify by los_long
+  strata = "los_long", 
+  prop = 0.5
+  )
+
+data_split
+
+# check the training set
+train_data <- training(data_split)
+dim(train_data)
+
+# check the test set
+test_data <- testing(data_split)
+dim(test_data)
+```
+(2) Pre-processing of data
+
+```{r}
+#| eval: true
+
+# impute missing values
+logit_recipe <- recipe(los_long ~ ., data = train_data) |>
+  
+  # For continuous variables, I use median to impute missing values
+  step_impute_median(sodium, potassium, 
+                     glucose, hematocrit,
+                     chloride, creatinine,
+                     glucose, hematocrit,
+                     white_blood_cell_count,
+                     bicarbonate,
+                     temperature_in_Fahrenheit,
+                     diastolic_non_invasive_blood_pressure,
+                     systolic_non_invasive_blood_pressure,
+                     respiratory_rate,
+                     heart_rate
+                     ) |>
+  
+  # For categorical variables, I create traditional dummy variables
+  step_dummy(all_nominal_predictors()) |>
+  
+  # zero-variance filter to remove predictors with zero variance
+  step_zv(all_numeric_predictors()) |>
+  
+  # center and scale numeric data 
+  # to have a mean of 0 and a standard deviation of 1
+  # so that the model can be trained more efficiently
+  step_normalize(all_numeric_predictors()) |>
+  
+  # High correlation filter to remove predictors with high correlation
+  step_corr(all_predictors(), threshold = 0.9)
+```
+
+3.  Train and tune the models using the training set.
+
+### Logistic regression with elastic net regularization
+
+First, define the model specification and the workflow for the logistic
+regression model. Then, tune the model using 5-fold cross-validation.
+
+1.  Define the model specification
+
+```{r}
+#| eval: true
+# define the model specification is to 
+# use the glmnet package to do classification
+logit_model <- logistic_reg(
+  mode = "classification",
+  penalty = tune(),
+  mixture = tune()) |>
+
+  set_engine("glmnet", standardize = FALSE) |>
+  print()
+```
+
+(2) define the workflow
+
+```{r}
+#| eval: true
+logit_workflow <- workflow() |>
+  add_recipe(logit_recipe) |>
+  add_model(logit_model) |>
+  print()
+```
+
+(3) tuning grid
+
+```{r}
+#| eval: true
+logit_param_grid <- grid_regular(
+  penalty(range = c(-4, 1)), 
+  mixture(),
+  levels = c(100, 5)
+  ) |>
+  print()
+```
+
+(4) cross-validation
+
+Define the cross-validation folds
+
+```{r}
+#| eval: true
+set.seed(203)
+
+# define the number of folds for cross-validation is 5
+logit_folds <- vfold_cv(train_data, v = 5)
+logit_folds
+
+```
+
+Fit cross-validated models
+
+```{r}
+#| eval: true  
+if (file.exists("logit_fit.rds")) {
+  logit_fit <- read_rds("logit_fit.rds")
+  logit_fit
+  
+} else {
+  (logit_fit <- logit_workflow |>
+    tune_grid(
+      resamples = logit_folds,
+      grid = logit_param_grid,
+      
+      # use roc_auc and accuracy as the evaluation metrics
+      metrics = metric_set(roc_auc, accuracy),
+      
+      # prepare for later stacking
+      control = control_stack_grid()
+    )) |>
+  system.time()
+
+  logit_fit |>
+    write_rds("logit_fit.rds")
+  
+  logit_fit
+}
+```
+
+(5) visualize CV results and select the best model
+
+```{r}
+#| eval: true
+logit_fit |>
+  
+  # aggregate metrics from 5-fold cross-validation
+  collect_metrics() |>
+  print(width = Inf) |>
+  filter(.metric == "roc_auc") |>
+  ggplot(mapping = aes(x = penalty, y = mean, color = factor(mixture))) +
+  geom_point() +
+  labs(x = "Penalty", y = "CV AUC") +
+  scale_x_log10()
+```
+
+show top 5 models
+
+```{r}
+#| eval: true
+logit_fit |>
+  show_best("roc_auc")
+```
+
+select the best model
+
+```{r}
+#| eval: true
+best_logit <- logit_fit |>
+  select_best("roc_auc")
+best_logit
+```
+
+(6) finalize the model
+
+Set the final workflow
+
+```{r}
+#| eval: true
+# Final workflow
+logit_final_workflow <- logit_workflow |>
+  finalize_workflow(best_logit)
+logit_final_workflow
+```
+
+Fit on the whole training set, then predict on the test set
+
+```{r}
+#| eval: true
+if (file.exists("logit_final_fit.rds")) {
+  logit_final_fit <- read_rds("logit_final_fit.rds")
+  logit_final_fit
+  
+} else {
+  logit_final_fit <- logit_final_workflow |>
+    last_fit(data_split)
+  
+  logit_final_fit |>
+    write_rds("logit_final_fit.rds")
+  
+  logit_final_fit
+}
+```
+
+Output the test set predictions
+
+```{r}
+#| eval: true
+# Test metrics
+logit_final_fit |> 
+  collect_metrics()
+```
+
+### Random forest
+
+First, define the model specification and the workflow for the random
+forest model. Then, tune the model using 5-fold cross-validation. 
+(1) define the model specification
+
+```{r}
+#| eval: true
+rf_recipe <- logit_recipe
+```
+
+(2) define random forest model
+
+```{r}
+#| eval: true
+rf_model <- rand_forest(
+  mode = "classification",
+  
+  # Number of predictors randomly sampled in each split
+  mtry = tune(),
+  
+  # Number of trees in ensemble
+  trees = tune()
+) |>
+  
+  # use the ranger package to do classification
+  set_engine("ranger") 
+
+rf_model
+```
+
+(3) define the workflow
+
+```{r}
+#| eval: true
+rf_workflow <- workflow() |>
+  add_recipe(rf_recipe) |>
+  add_model(rf_model) |>
+  print()
+```
+
+(4) tuning grid
+
+```{r}
+#| eval: true
+# define the tuning grid
+
+# try 5 different values for mtry and 3 different values for trees
+rf_param_grid <- grid_regular(
+  trees(range = c(200L, 800L)), 
+  mtry(range = c(2L, 5L)),
+  levels = c(5, 3)
+  )
+
+rf_param_grid
+```
+
+(5) cross-validation
+
+Define the cross-validation folds
+
+```{r}
+#| eval: true
+set.seed(203)
+
+# define the number of folds for cross-validation is 5
+rf_folds <- vfold_cv(train_data, v = 5)
+
+rf_folds
+```
+
+Fit cross-validated models
+
+```{r}
+#| eval: true
+if (file.exists("rf_fit.rds")) {
+  rf_fit <- read_rds("rf_fit.rds")
+  rf_fit
+} else {
+  (rf_fit <- rf_workflow |>
+    tune_grid(
+      resamples = rf_folds,
+      grid = rf_param_grid,
+      
+      # use roc_auc and accuracy as the evaluation metrics
+      metrics = metric_set(roc_auc, accuracy),
+      
+      # prepare for later stacking
+      control = control_stack_grid()
+    )) |>
+  system.time()
+
+  rf_fit |>
+    write_rds("rf_fit.rds")
+  
+  rf_fit
+}
+```
+
+(6) visualize CV results and select the best model
+
+```{r}
+#| eval: true
+rf_fit |>
+  collect_metrics() |>
+  print(width = Inf) |>
+  filter(.metric == "roc_auc") |>
+  ggplot(mapping = aes(x = trees, y = mean, color = factor(mtry))) +
+  geom_point() +
+  labs(x = "Num. of Trees", y = "CV AUC")
+```
+
+show top 5 models
+
+```{r}
+#| eval: true
+rf_fit |>
+  show_best("roc_auc")
+```
+
+select the best model
+
+```{r}
+#| eval: true
+best_rf <- rf_fit |>
+  select_best("roc_auc")
+best_rf
+```
+
+(7) finalize the model
+
+Set the final workflow
+
+```{r}
+#| eval: true
+rf_final_workflow <- rf_workflow |>
+  finalize_workflow(best_rf)
+rf_final_workflow
+```
+
+Fit on the whole training set, then predict on the test set
+
+```{r}
+#| eval: true
+if (file.exists("rf_final_fit.rds")) {
+  rf_final_fit <- read_rds("rf_final_fit.rds")
+  rf_final_fit
+  
+} else {
+  rf_final_fit <- rf_final_workflow |>
+    last_fit(data_split)
+  
+  rf_final_fit |>
+    write_rds("rf_final_fit.rds")
+  
+  rf_final_fit
+}
+```
+
+Output the test set predictions
+
+```{r}
+#| eval: true
+rf_final_fit |> 
+  collect_metrics()
+```
+
+### Boosting (XGBoost)
+
+First, define the model specification and the workflow for the boosting
+model. Then, tune the model using 5-fold cross-validation. 
+(1) define the model specification 
+
+```{r}
+#| eval: true
+gb_recipe <- logit_recipe
+```
+
+(2) define boosting model
+
+```{r}
+#| eval: true
+gb_model <- boost_tree(
+  mode = "classification",
+  
+  # Number of trees in ensemble
+  trees = 1000,
+  
+  # Shrinkage factor
+  learn_rate = tune(),
+  
+  # Maximum depth of trees
+  tree_depth = tune()
+) |>
+  
+  # use the xgboost package to do classification
+  set_engine("xgboost")
+
+gb_model
+```
+
+(3) define the workflow
+
+```{r}
+#| eval: true
+gb_workflow <- workflow() |>
+  add_recipe(gb_recipe) |>
+  add_model(gb_model) 
+gb_workflow
+```
+
+(4) tuning grid
+
+```{r}
+#| eval: true
+# set the tuning grid
+gb_param_grid <- grid_regular(
+  
+  # try 3 different values for tree_depth, 5 different values for learn_rate
+  tree_depth(range = c(1L, 3L)),
+  learn_rate(range = c(-5, 2), trans = log10_trans()),
+  levels = c(3, 5)
+  )
+
+gb_param_grid
+```
+
+(5) cross-validation set cross-validation patitions
+
+```{r}
+#| eval: true
+set.seed(203)
+
+# define the number of folds for cross-validation is 5
+gb_folds <- vfold_cv(train_data, v = 5)
+
+gb_folds
+```
+
+Fit cross-validated models
+
+```{r}
+#| eval: true
+if (file.exists("gb_fit.rds")) {
+  gb_fit <- read_rds("gb_fit.rds")
+  gb_fit
+} else {
+  (gb_fit <- gb_workflow |>
+    tune_grid(
+      resamples = gb_folds,
+      grid = gb_param_grid,
+      
+      # use roc_auc and accuracy as the evaluation metrics
+      metrics = metric_set(roc_auc, accuracy),
+      
+      # prepare for later stacking
+      control = control_stack_grid()
+      )) |>
+    system.time()
+  
+  gb_fit |>
+    write_rds("gb_fit.rds")
+  
+  gb_fit
+}
+```
+
+(6) visualize CV results and select the best model
+
+```{r}
+#| eval: true
+gb_fit |>
+  collect_metrics() |>
+  print(width = Inf) |>
+  filter(.metric == "roc_auc") |>
+  ggplot(mapping = aes(x = learn_rate, y = mean, color = factor(tree_depth))) +
+  geom_point() +
+  labs(x = "Learning Rate", y = "CV AUC") +
+  scale_x_log10()
+```
+
+show top 5 models
+
+```{r}
+#| eval: true
+gb_fit |>
+  show_best("roc_auc")
+```
+
+select the best model
+
+```{r}
+#| eval: true
+best_gb <- gb_fit |>
+  select_best("roc_auc")
+best_gb
+```
+
+(7) finalize the model
+
+```{r}
+#| eval: true
+gb_final_workflow <- gb_workflow |>
+  finalize_workflow(best_gb)
+gb_final_workflow
+```
+
+Fit on the whole training set, then predict on the test set
+
+```{r}
+#| eval: true
+
+if (file.exists("gb_final_fit.rds")) {
+  gb_final_fit <- read_rds("gb_final_fit.rds")
+  gb_final_fit
+  
+} else {
+  gb_final_fit <- gb_final_workflow |>
+    last_fit(data_split)
+  
+  gb_final_fit |>
+    write_rds("gb_final_fit.rds")
+  
+  gb_final_fit
+}
+
+```
+
+Output the test set predictions
+
+```{r}
+#| eval: true
+gb_final_fit |> 
+  collect_metrics()
+```
+
+4.  Compare model classification performance on the test set. Report
+    both the area under ROC curve and accuracy for each machine learning
+    algorithm and the model stacking. Interpret the results. What are
+    the most important features in predicting long ICU stays? How do the
+    models compare in terms of performance and interpretability?
+
+### Model comparison
+
+I used three machine learning algorithms: logistic regression, gradient
+boosting, and random forest. Here, I compare their classification
+performance on the test set using the area under the ROC curve (AUC) and
+accuracy.
+
+```{r}
+#| eval: true
+# collect the metrics of the three models
+logit_final_fit |> collect_metrics()
+rf_final_fit |> collect_metrics()
+gb_final_fit |> collect_metrics()
+```
+
+From the output, we can see that the gradient boosting model has the
+highest AUC (0.6449823) and accuracy (0.6045476) on the test set. The
+logistic regression model has the lowest AUC (0.6065411) and accuracy
+(0.5776284). The random forest model has an AUC of 0.6437507 and
+accuracy of 0.6041103. Therefore, the gradient boosting model is the
+best-performing model among the three.
+
+### Model stacking
+
+Build the stacked ensemble.
+
+```{r}
+
+if (file.exists("stacks.rds")) {
+  model_st <- read_rds("stacks.rds")
+  model_st
+} else {
+  model_st <- 
+    stacks() |>
+    
+    # add candidate models
+    add_candidates(logit_fit) |>
+    add_candidates(gb_fit) |>
+    add_candidates(rf_fit) |>
+    
+    # determine how to combine their predictions
+    blend_predictions(
+      penalty = 10^(-3:1),
+      metrics = c("roc_auc"),
+      
+      # set the number of resamples to 3 to reduce computation time
+      times = 3) |>
+    
+    # fit the candidates with nonzero stacking coefficients
+    fit_members()
+  
+  model_st |>
+    write_rds("stacks.rds")
+  
+  model_st
+}
+```
+
+Plot the stacked results
+
+```{r}
+#| eval: true
+autoplot(model_st)
+```
+
+To show the relationship more directly
+
+```{r}
+#| eval: true
+autoplot(model_st, type = "members")
+```
+
+To see the top models
+
+```{r}
+#| eval: true
+autoplot(model_st, type = "weights")
+```
+
+To identify coefficients of random forest model
+
+```{r}
+#| eval: true
+collect_parameters(model_st, "rf_fit")
+```
+
+To identify coefficients of gradient boosting model
+
+```{r}
+#| eval: true
+collect_parameters(model_st, "gb_fit")
+```
+
+To identify coefficients of logistic regression model
+
+```{r}
+#| eval: true
+collect_parameters(model_st, "logit_fit")
+```
+
+### Final classification
+
+```{r}
+#| eval: true
+if (file.exists("final_classification.rds")) {
+  final_classification <- read_rds("final_classification.rds")
+  final_classification
+} else {
+  final_classification <- test_data |>
+    bind_cols(predict(model_st, test_data, type = "prob")) |>
+    print(width = Inf)
+  final_classification |>
+    write_rds("final_classification.rds")
+  final_classification
+}
+```
+
+Compute the ROC AUC for the model
+
+```{r}
+#| eval: true
+yardstick::roc_auc(
+  final_classification,
+  truth = los_long,
+  contains(".pred_FALSE")
+  )
+```
+
+Use the members argument to generate predictions from each individual
+
+```{r}
+#| eval: true
+if (file.exists("class_predictions.rds")) {
+  class_predictions <- read_rds("class_predictions.rds")
+  class_predictions
+} else {
+class_predictions <- test_data |>
+  select(los_long) |>
+  bind_cols(predict(model_st, 
+                    test_data, 
+                    type = "class", 
+                    members = TRUE
+                    ))
+  class_predictions |>
+  write_rds("class_predictions.rds")
+class_predictions
+}
+```
+
+```{r}
+#| eval: true
+class_predictions <- class_predictions |>
+  mutate(across(where(is.factor), as.character))
+
+map(
+  colnames(class_predictions),
+  ~ mean(class_predictions$los_long == 
+           pull(class_predictions, .x))
+  ) |>
+  set_names(colnames(class_predictions)) |>
+  as_tibble() |>
+  pivot_longer(c(everything(), -los_long))
+```
+
+#### Interpret the results
+
+Interpretations: 
+From the output, we can see that the gradient boosting model has the greatest weight in the stacked ensemble.
+The random forest model has the second greatest weight, and the logistic regression model has the least weight. 
+The stacked ensemble has an AUC of 0.6499, which is slightly higher than the AUC of the gradient boosting model. 
+Therefore, the stacked ensemble is the best-performing model among the four.
+
+The AUC of the stacked ensemble is 0.6499, meaning that 
+the probability of the model ranking a randomly chosen positive observation 
+higher than a randomly chosen negative observation is 0.6499. 
+
+#### The most important features
+```{r}
+#| eval: true
+
+gb_final_fit |> 
+  extract_fit_parsnip() |>
+  pluck("fit") |>
+  vip::vip() |>
+  print()
+
+```
+From the plot above, it is clear that the most important features in predicting long ICU stays are the 
+following:
