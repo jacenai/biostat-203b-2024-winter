@@ -3086,8 +3086,9 @@ vertical-align: -.125em;
   <li><a href="#model-stacking" id="toc-model-stacking" class="nav-link" data-scroll-target="#model-stacking">Model stacking</a></li>
   <li><a href="#final-classification" id="toc-final-classification" class="nav-link" data-scroll-target="#final-classification">Final classification</a>
   <ul class="collapse">
-  <li><a href="#interpret-the-results" id="toc-interpret-the-results" class="nav-link" data-scroll-target="#interpret-the-results">Interpret the results</a></li>
+  <li><a href="#report-auc-and-accuracy-and-interpret-the-results" id="toc-report-auc-and-accuracy-and-interpret-the-results" class="nav-link" data-scroll-target="#report-auc-and-accuracy-and-interpret-the-results">Report AUC and accuracy and interpret the results</a></li>
   <li><a href="#the-most-important-features" id="toc-the-most-important-features" class="nav-link" data-scroll-target="#the-most-important-features">The most important features</a></li>
+  <li><a href="#performance-and-interpretability" id="toc-performance-and-interpretability" class="nav-link" data-scroll-target="#performance-and-interpretability">Performance and interpretability</a></li>
   </ul></li>
   </ul></li>
   </ul>
@@ -3129,9 +3130,9 @@ vertical-align: -.125em;
 </section>
 <section id="answer" class="level2">
 <h2 class="anchored" data-anchor-id="answer">Answer</h2>
-<ol type="1">
-<li>Data preprocessing and feature engineering.</li>
-</ol>
+<ul>
+<li><strong><em>Data preprocessing and feature engineering.</em></strong></li>
+</ul>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load libraries</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gtsummary)</span>
@@ -3152,15 +3153,16 @@ vertical-align: -.125em;
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load &quot;mimiciv_icu_cohort.rds&quot; data</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>mimic_icu_cohort <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">&quot;mimic_icu_cohort.rds&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>last_careunit,</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>         <span class="sc">-</span>dod,</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>         <span class="sc">-</span>discharge_location,</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>         <span class="sc">-</span>hospital_expire_flag,</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>         <span class="sc">-</span>los)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Check missing values of the data</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="fu">colSums</span>(<span class="fu">is.na</span>(mimic_icu_cohort))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span>last_careunit,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span>dod,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span>discharge_location,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span>hospital_expire_flag,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span>los</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Check missing values of the data</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">colSums</span>(<span class="fu">is.na</span>(mimic_icu_cohort))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>                           subject_id                               hadm_id 
                                     0                                     0 
@@ -3189,36 +3191,34 @@ diastolic_non_invasive_blood_pressure                      respiratory_rate
                            age_intime                              los_long 
                                     0                                     0 </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the distribution of each continuous variable</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># and I found that most of the continuous variables are right-skewed</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># so I decide to use median to impute missing values later</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>hist_data <span class="ot">&lt;-</span> <span class="fu">lapply</span>(mimic_icu_cohort[, <span class="fu">c</span>(<span class="st">&quot;sodium&quot;</span>, <span class="st">&quot;chloride&quot;</span>, <span class="st">&quot;creatinine&quot;</span>,</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;potassium&quot;</span>, <span class="st">&quot;glucose&quot;</span>, <span class="st">&quot;hematocrit&quot;</span>,</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;white_blood_cell_count&quot;</span>, <span class="st">&quot;bicarbonate&quot;</span>,</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;temperature_in_Fahrenheit&quot;</span>, </span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;diastolic_non_invasive_blood_pressure&quot;</span>,</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;systolic_non_invasive_blood_pressure&quot;</span>,</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;respiratory_rate&quot;</span>, <span class="st">&quot;heart_rate&quot;</span>,</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;age_intime&quot;</span>)], <span class="cf">function</span>(x) {</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">value =</span> x)</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(hist_data) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;sodium&quot;</span>, <span class="st">&quot;chloride&quot;</span>, <span class="st">&quot;creatinine&quot;</span>,</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;potassium&quot;</span>, <span class="st">&quot;glucose&quot;</span>, <span class="st">&quot;hematocrit&quot;</span>,</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;white_blood_cell_count&quot;</span>, <span class="st">&quot;bicarbonate&quot;</span>,</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;temperature_in_Fahrenheit&quot;</span>, </span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;diastolic_non_invasive_blood_pressure&quot;</span>,</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;systolic_non_invasive_blood_pressure&quot;</span>,</span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;respiratory_rate&quot;</span>, <span class="st">&quot;heart_rate&quot;</span>,</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot;age_intime&quot;</span>)</span>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define a vector with the names of the continuous variables</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>colnames <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;sodium&quot;</span>, <span class="st">&quot;chloride&quot;</span>, <span class="st">&quot;creatinine&quot;</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;potassium&quot;</span>, <span class="st">&quot;glucose&quot;</span>, <span class="st">&quot;hematocrit&quot;</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;white_blood_cell_count&quot;</span>, <span class="st">&quot;bicarbonate&quot;</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;temperature_in_Fahrenheit&quot;</span>, </span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;diastolic_non_invasive_blood_pressure&quot;</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;systolic_non_invasive_blood_pressure&quot;</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;respiratory_rate&quot;</span>, <span class="st">&quot;heart_rate&quot;</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;age_intime&quot;</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the distribution of each continuous variable</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co"># and I found that most of the continuous variables are right-skewed</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># so I decide to use median to impute missing values later</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>hist_data <span class="ot">&lt;-</span> <span class="fu">lapply</span>(mimic_icu_cohort[, colnames], <span class="cf">function</span>(x) {</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">value =</span> x)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(hist_data) <span class="ot">&lt;-</span> colnames</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>hist_data <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(hist_data, <span class="at">.id =</span> <span class="st">&quot;variable&quot;</span>)</span>
 <span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>hist_data <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(hist_data, <span class="at">.id =</span> <span class="st">&quot;variable&quot;</span>)</span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(hist_data, <span class="fu">aes</span>(<span class="at">x =</span> value)) <span class="sc">+</span></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">kernel =</span> <span class="st">&quot;cosine&quot;</span>, <span class="at">fill =</span> <span class="st">&quot;skyblue&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> variable, <span class="at">scales =</span> <span class="st">&quot;free&quot;</span>) <span class="sc">+</span></span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Value&quot;</span>) <span class="sc">+</span></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(hist_data, <span class="fu">aes</span>(<span class="at">x =</span> value)) <span class="sc">+</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">kernel =</span> <span class="st">&quot;cosine&quot;</span>, <span class="at">fill =</span> <span class="st">&quot;skyblue&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> variable, <span class="at">scales =</span> <span class="st">&quot;free&quot;</span>) <span class="sc">+</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Value&quot;</span>) <span class="sc">+</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning: Removed 64133 rows containing non-finite outside the scale range
 (`stat_density()`).</code></pre>
@@ -3235,33 +3235,34 @@ diastolic_non_invasive_blood_pressure                      respiratory_rate
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># For categorical variables &quot;marital_status&quot;, </span></span>
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># I use a new category &quot;Unknown&quot; to get rid of missing values</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">marital_status =</span> </span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>           <span class="fu">ifelse</span>(<span class="fu">is.na</span>(marital_status), <span class="st">&quot;Unknown&quot;</span>, marital_status)) <span class="sc">|&gt;</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Make the categorical variables as factors to make it easier for modeling</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">marital_status =</span> </span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>           <span class="fu">as.factor</span>(marital_status)) <span class="sc">|&gt;</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">los_long =</span> <span class="fu">as.factor</span>(los_long))</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co"># summarize the data</span></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>mimic_icu_cohort <span class="sc">|&gt;</span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tbl_summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">marital_status =</span> <span class="fu">ifelse</span>(</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(marital_status), <span class="st">&quot;Unknown&quot;</span>, marital_status)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Make the categorical variables as factors </span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># to make it easier for modeling</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">marital_status =</span> <span class="fu">as.factor</span>(marital_status)) <span class="sc">|&gt;</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">los_long =</span> <span class="fu">as.factor</span>(los_long))</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co"># summarize the data</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>mimic_icu_cohort <span class="sc">|&gt;</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tbl_summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<div id="comrhwqssg" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#comrhwqssg table {
+<div id="zfsnfxoxse" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#zfsnfxoxse table {
 font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 -webkit-font-smoothing: antialiased;
 -moz-osx-font-smoothing: grayscale;
 }
-#comrhwqssg thead, #comrhwqssg tbody, #comrhwqssg tfoot, #comrhwqssg tr, #comrhwqssg td, #comrhwqssg th {
+#zfsnfxoxse thead, #zfsnfxoxse tbody, #zfsnfxoxse tfoot, #zfsnfxoxse tr, #zfsnfxoxse td, #zfsnfxoxse th {
 border-style: none;
 }
-#comrhwqssg p {
+#zfsnfxoxse p {
 margin: 0;
 padding: 0;
 }
-#comrhwqssg .gt_table {
+#zfsnfxoxse .gt_table {
 display: table;
 border-collapse: collapse;
 line-height: normal;
@@ -3286,11 +3287,11 @@ border-left-style: none;
 border-left-width: 2px;
 border-left-color: #D3D3D3;
 }
-#comrhwqssg .gt_caption {
+#zfsnfxoxse .gt_caption {
 padding-top: 4px;
 padding-bottom: 4px;
 }
-#comrhwqssg .gt_title {
+#zfsnfxoxse .gt_title {
 color: #333333;
 font-size: 125%;
 font-weight: initial;
@@ -3301,7 +3302,7 @@ padding-right: 5px;
 border-bottom-color: #FFFFFF;
 border-bottom-width: 0;
 }
-#comrhwqssg .gt_subtitle {
+#zfsnfxoxse .gt_subtitle {
 color: #333333;
 font-size: 85%;
 font-weight: initial;
@@ -3312,7 +3313,7 @@ padding-right: 5px;
 border-top-color: #FFFFFF;
 border-top-width: 0;
 }
-#comrhwqssg .gt_heading {
+#zfsnfxoxse .gt_heading {
 background-color: #FFFFFF;
 text-align: center;
 border-bottom-color: #FFFFFF;
@@ -3323,12 +3324,12 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#comrhwqssg .gt_bottom_border {
+#zfsnfxoxse .gt_bottom_border {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#comrhwqssg .gt_col_headings {
+#zfsnfxoxse .gt_col_headings {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #D3D3D3;
@@ -3342,7 +3343,7 @@ border-right-style: none;
 border-right-width: 1px;
 border-right-color: #D3D3D3;
 }
-#comrhwqssg .gt_col_heading {
+#zfsnfxoxse .gt_col_heading {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3361,7 +3362,7 @@ padding-left: 5px;
 padding-right: 5px;
 overflow-x: hidden;
 }
-#comrhwqssg .gt_column_spanner_outer {
+#zfsnfxoxse .gt_column_spanner_outer {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3372,13 +3373,13 @@ padding-bottom: 0;
 padding-left: 4px;
 padding-right: 4px;
 }
-#comrhwqssg .gt_column_spanner_outer:first-child {
+#zfsnfxoxse .gt_column_spanner_outer:first-child {
 padding-left: 0;
 }
-#comrhwqssg .gt_column_spanner_outer:last-child {
+#zfsnfxoxse .gt_column_spanner_outer:last-child {
 padding-right: 0;
 }
-#comrhwqssg .gt_column_spanner {
+#zfsnfxoxse .gt_column_spanner {
 border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
@@ -3389,10 +3390,10 @@ overflow-x: hidden;
 display: inline-block;
 width: 100%;
 }
-#comrhwqssg .gt_spanner_row {
+#zfsnfxoxse .gt_spanner_row {
 border-bottom-style: hidden;
 }
-#comrhwqssg .gt_group_heading {
+#zfsnfxoxse .gt_group_heading {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3417,7 +3418,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 text-align: left;
 }
-#comrhwqssg .gt_empty_group_heading {
+#zfsnfxoxse .gt_empty_group_heading {
 padding: 0.5px;
 color: #333333;
 background-color: #FFFFFF;
@@ -3431,13 +3432,13 @@ border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 vertical-align: middle;
 }
-#comrhwqssg .gt_from_md > :first-child {
+#zfsnfxoxse .gt_from_md > :first-child {
 margin-top: 0;
 }
-#comrhwqssg .gt_from_md > :last-child {
+#zfsnfxoxse .gt_from_md > :last-child {
 margin-bottom: 0;
 }
-#comrhwqssg .gt_row {
+#zfsnfxoxse .gt_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3455,7 +3456,7 @@ border-right-color: #D3D3D3;
 vertical-align: middle;
 overflow-x: hidden;
 }
-#comrhwqssg .gt_stub {
+#zfsnfxoxse .gt_stub {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3467,7 +3468,7 @@ border-right-color: #D3D3D3;
 padding-left: 5px;
 padding-right: 5px;
 }
-#comrhwqssg .gt_stub_row_group {
+#zfsnfxoxse .gt_stub_row_group {
 color: #333333;
 background-color: #FFFFFF;
 font-size: 100%;
@@ -3480,13 +3481,13 @@ padding-left: 5px;
 padding-right: 5px;
 vertical-align: top;
 }
-#comrhwqssg .gt_row_group_first td {
+#zfsnfxoxse .gt_row_group_first td {
 border-top-width: 2px;
 }
-#comrhwqssg .gt_row_group_first th {
+#zfsnfxoxse .gt_row_group_first th {
 border-top-width: 2px;
 }
-#comrhwqssg .gt_summary_row {
+#zfsnfxoxse .gt_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -3495,14 +3496,14 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#comrhwqssg .gt_first_summary_row {
+#zfsnfxoxse .gt_first_summary_row {
 border-top-style: solid;
 border-top-color: #D3D3D3;
 }
-#comrhwqssg .gt_first_summary_row.thick {
+#zfsnfxoxse .gt_first_summary_row.thick {
 border-top-width: 2px;
 }
-#comrhwqssg .gt_last_summary_row {
+#zfsnfxoxse .gt_last_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3511,7 +3512,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#comrhwqssg .gt_grand_summary_row {
+#zfsnfxoxse .gt_grand_summary_row {
 color: #333333;
 background-color: #FFFFFF;
 text-transform: inherit;
@@ -3520,7 +3521,7 @@ padding-bottom: 8px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#comrhwqssg .gt_first_grand_summary_row {
+#zfsnfxoxse .gt_first_grand_summary_row {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3529,7 +3530,7 @@ border-top-style: double;
 border-top-width: 6px;
 border-top-color: #D3D3D3;
 }
-#comrhwqssg .gt_last_grand_summary_row_top {
+#zfsnfxoxse .gt_last_grand_summary_row_top {
 padding-top: 8px;
 padding-bottom: 8px;
 padding-left: 5px;
@@ -3538,10 +3539,10 @@ border-bottom-style: double;
 border-bottom-width: 6px;
 border-bottom-color: #D3D3D3;
 }
-#comrhwqssg .gt_striped {
+#zfsnfxoxse .gt_striped {
 background-color: rgba(128, 128, 128, 0.05);
 }
-#comrhwqssg .gt_table_body {
+#zfsnfxoxse .gt_table_body {
 border-top-style: solid;
 border-top-width: 2px;
 border-top-color: #D3D3D3;
@@ -3549,7 +3550,7 @@ border-bottom-style: solid;
 border-bottom-width: 2px;
 border-bottom-color: #D3D3D3;
 }
-#comrhwqssg .gt_footnotes {
+#zfsnfxoxse .gt_footnotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -3562,7 +3563,7 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#comrhwqssg .gt_footnote {
+#zfsnfxoxse .gt_footnote {
 margin: 0px;
 font-size: 90%;
 padding-top: 4px;
@@ -3570,7 +3571,7 @@ padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#comrhwqssg .gt_sourcenotes {
+#zfsnfxoxse .gt_sourcenotes {
 color: #333333;
 background-color: #FFFFFF;
 border-bottom-style: none;
@@ -3583,57 +3584,57 @@ border-right-style: none;
 border-right-width: 2px;
 border-right-color: #D3D3D3;
 }
-#comrhwqssg .gt_sourcenote {
+#zfsnfxoxse .gt_sourcenote {
 font-size: 90%;
 padding-top: 4px;
 padding-bottom: 4px;
 padding-left: 5px;
 padding-right: 5px;
 }
-#comrhwqssg .gt_left {
+#zfsnfxoxse .gt_left {
 text-align: left;
 }
-#comrhwqssg .gt_center {
+#zfsnfxoxse .gt_center {
 text-align: center;
 }
-#comrhwqssg .gt_right {
+#zfsnfxoxse .gt_right {
 text-align: right;
 font-variant-numeric: tabular-nums;
 }
-#comrhwqssg .gt_font_normal {
+#zfsnfxoxse .gt_font_normal {
 font-weight: normal;
 }
-#comrhwqssg .gt_font_bold {
+#zfsnfxoxse .gt_font_bold {
 font-weight: bold;
 }
-#comrhwqssg .gt_font_italic {
+#zfsnfxoxse .gt_font_italic {
 font-style: italic;
 }
-#comrhwqssg .gt_super {
+#zfsnfxoxse .gt_super {
 font-size: 65%;
 }
-#comrhwqssg .gt_footnote_marks {
+#zfsnfxoxse .gt_footnote_marks {
 font-size: 75%;
 vertical-align: 0.4em;
 position: initial;
 }
-#comrhwqssg .gt_asterisk {
+#zfsnfxoxse .gt_asterisk {
 font-size: 100%;
 vertical-align: 0;
 }
-#comrhwqssg .gt_indent_1 {
+#zfsnfxoxse .gt_indent_1 {
 text-indent: 5px;
 }
-#comrhwqssg .gt_indent_2 {
+#zfsnfxoxse .gt_indent_2 {
 text-indent: 10px;
 }
-#comrhwqssg .gt_indent_3 {
+#zfsnfxoxse .gt_indent_3 {
 text-indent: 15px;
 }
-#comrhwqssg .gt_indent_4 {
+#zfsnfxoxse .gt_indent_4 {
 text-indent: 20px;
 }
-#comrhwqssg .gt_indent_5 {
+#zfsnfxoxse .gt_indent_5 {
 text-indent: 25px;
 }
 </style>
@@ -3958,10 +3959,9 @@ text-indent: 25px;
 </div>
 </div>
 </div>
-<ol start="2" type="1">
-<li>Partition data into 50% training set and 50% test set. Stratify partitioning according to <code>los_long</code>. For grading purpose, sort the data by <code>subject_id</code>, <code>hadm_id</code>, and <code>stay_id</code> and use the seed <code>203</code> for the initial data split. Below is the sample code.</li>
-</ol>
-<!-- -->
+<ul>
+<li><strong><em>Partition data into 50% training set and 50% test set. Stratify partitioning according to <code>los_long</code>. For grading purpose, sort the data by <code>subject_id</code>, <code>hadm_id</code>, and <code>stay_id</code> and use the seed <code>203</code> for the initial data split. Below is the sample code.</em></strong></li>
+</ul>
 <ol type="1">
 <li>Partition data into 50% training set and 50% test set.</li>
 </ol>
@@ -4031,9 +4031,9 @@ text-indent: 25px;
 <span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>  <span class="co"># so that the model can be trained more efficiently</span></span>
 <span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">step_normalize</span>(<span class="fu">all_numeric_predictors</span>()) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<ol start="3" type="1">
-<li>Train and tune the models using the training set.</li>
-</ol>
+<ul>
+<li><strong><em>Train and tune the models using the training set.</em></strong></li>
+</ul>
 <section id="logistic-regression-with-elastic-net-regularization" class="level3">
 <h3 class="anchored" data-anchor-id="logistic-regression-with-elastic-net-regularization">Logistic regression with elastic net regularization</h3>
 <p>First, define the model specification and the workflow for the logistic regression model. Then, tune the model using 5-fold cross-validation.</p>
@@ -4041,7 +4041,8 @@ text-indent: 25px;
 <li>Define the model specification</li>
 </ol>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>logit_recipe <span class="ot">&lt;-</span> recipe</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># define the recipe</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>logit_recipe <span class="ot">&lt;-</span> recipe</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># define the model specification is to </span></span>
@@ -4200,10 +4201,11 @@ Computational engine: glmnet </code></pre>
 <span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect_metrics</span>() <span class="sc">|&gt;</span></span>
 <span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">width =</span> <span class="cn">Inf</span>) <span class="sc">|&gt;</span></span>
 <span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">&quot;roc_auc&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> penalty, <span class="at">y =</span> mean, <span class="at">color =</span> <span class="fu">factor</span>(mixture))) <span class="sc">+</span></span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Penalty&quot;</span>, <span class="at">y =</span> <span class="st">&quot;CV AUC&quot;</span>) <span class="sc">+</span></span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> penalty, <span class="at">y =</span> mean, </span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>                       <span class="at">color =</span> <span class="fu">factor</span>(mixture))) <span class="sc">+</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Penalty&quot;</span>, <span class="at">y =</span> <span class="st">&quot;CV AUC&quot;</span>) <span class="sc">+</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 300 × 8
     penalty mixture .metric  .estimator  mean     n std_err
@@ -4349,13 +4351,17 @@ Computational engine: glmnet </code></pre>
 <li>Interpret the model</li>
 </ol>
 <p>First, the AUC of the final logistic regression model is 0.6064933, meaning that the model can correctly classify 60.6% of the test set. The AUC is a measure of the ability of the model to distinguish between classes, and the AUC value ranges from 0 to 1, with 0.5 indicating random guessing and 1 indicating perfect classification. Therefore, the AUC of the final logistic regression model is not very high. Also, the accuracy of the final logistic regression model is 0.5777924, which means that the model can only correctly predict 57.8% of the test set.</p>
-<p>The variable importance plot shows that there are 10 predictors in the top 10 important predictors, and the most important predictors are the first care unit are important predictors.</p>
+<p>The variable importance plot shows the top 10 important predictors, and the most important predictor is the first care unit are important predictors.</p>
 </section>
 <section id="random-forest" class="level3">
 <h3 class="anchored" data-anchor-id="random-forest">Random forest</h3>
-<p>First, define the model specification and the workflow for the random forest model. Then, tune the model using 5-fold cross-validation. (1) define the model specification</p>
+<p>First, define the model specification and the workflow for the random forest model. Then, tune the model using 5-fold cross-validation.</p>
+<ol type="1">
+<li>define the model specification</li>
+</ol>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>rf_recipe <span class="ot">&lt;-</span> recipe</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># define the recipe</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>rf_recipe <span class="ot">&lt;-</span> recipe</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ol start="2" type="1">
 <li>define random forest model</li>
@@ -4526,9 +4532,10 @@ Computational engine: ranger </code></pre>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect_metrics</span>() <span class="sc">|&gt;</span></span>
 <span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">width =</span> <span class="cn">Inf</span>) <span class="sc">|&gt;</span></span>
 <span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">&quot;roc_auc&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> trees, <span class="at">y =</span> mean, <span class="at">color =</span> <span class="fu">factor</span>(mtry))) <span class="sc">+</span></span>
-<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Num. of Trees&quot;</span>, <span class="at">y =</span> <span class="st">&quot;CV AUC&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> trees, <span class="at">y =</span> mean, </span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>                       <span class="at">color =</span> <span class="fu">factor</span>(mtry))) <span class="sc">+</span></span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Num. of Trees&quot;</span>, <span class="at">y =</span> <span class="st">&quot;CV AUC&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 30 × 8
     mtry trees .metric  .estimator  mean     n std_err .config              
@@ -4671,13 +4678,17 @@ Computational engine: ranger </code></pre>
 <li>Interpret the model</li>
 </ol>
 <p>First, the AUC of the final random forest model is 0.6437507, meaning that the model can correctly classify 64.4% of the test set. The AUC is a measure of the ability of the model to distinguish between classes, and the AUC value ranges from 0 to 1, with 0.5 indicating random guessing and 1 indicating perfect classification. Therefore, the AUC of the final random forest model is higher than the AUC of the final logistic regression model. Also, the accuracy of the final random forest model is 0.6041103, which means that the model can correctly predict 60.4% of the test set.</p>
-<p>The variable importance plot shows that there are 10 predictors in the top 10 important predictors, and the most important predictor is the systolic non invasive blood pressure.</p>
+<p>The variable importance plot shows that the top 10 important predictors, and the most important predictor is the systolic non invasive blood pressure.</p>
 </section>
 <section id="boosting-xgboost" class="level3">
 <h3 class="anchored" data-anchor-id="boosting-xgboost">Boosting (XGBoost)</h3>
-<p>First, define the model specification and the workflow for the boosting model. Then, tune the model using 5-fold cross-validation. (1) define the model specification</p>
+<p>First, define the model specification and the workflow for the boosting model. Then, tune the model using 5-fold cross-validation.</p>
+<ol type="1">
+<li>define the model specification</li>
+</ol>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>gb_recipe <span class="ot">&lt;-</span> recipe</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="co"># define the recipe</span></span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>gb_recipe <span class="ot">&lt;-</span> recipe</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <ol start="2" type="1">
 <li>define boosting model</li>
@@ -4750,13 +4761,14 @@ Computational engine: xgboost </code></pre>
 <div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="co"># set the tuning grid</span></span>
 <span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>gb_param_grid <span class="ot">&lt;-</span> <span class="fu">grid_regular</span>(</span>
 <span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># try 3 different values for tree_depth, 5 different values for learn_rate</span></span>
-<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tree_depth</span>(<span class="at">range =</span> <span class="fu">c</span>(<span class="dv">1</span>L, <span class="dv">3</span>L)),</span>
-<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">learn_rate</span>(<span class="at">range =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">5</span>, <span class="dv">2</span>), <span class="at">trans =</span> <span class="fu">log10_trans</span>()),</span>
-<span id="cb67-7"><a href="#cb67-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">5</span>)</span>
-<span id="cb67-8"><a href="#cb67-8" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb67-9"><a href="#cb67-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb67-10"><a href="#cb67-10" aria-hidden="true" tabindex="-1"></a>gb_param_grid</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># try 3 different values for tree_depth, </span></span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 5 different values for learn_rate</span></span>
+<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tree_depth</span>(<span class="at">range =</span> <span class="fu">c</span>(<span class="dv">1</span>L, <span class="dv">3</span>L)),</span>
+<span id="cb67-7"><a href="#cb67-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">learn_rate</span>(<span class="at">range =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">5</span>, <span class="dv">2</span>), <span class="at">trans =</span> <span class="fu">log10_trans</span>()),</span>
+<span id="cb67-8"><a href="#cb67-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">5</span>)</span>
+<span id="cb67-9"><a href="#cb67-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb67-10"><a href="#cb67-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb67-11"><a href="#cb67-11" aria-hidden="true" tabindex="-1"></a>gb_param_grid</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 15 × 2
    tree_depth learn_rate
@@ -4846,10 +4858,11 @@ Computational engine: xgboost </code></pre>
 <span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect_metrics</span>() <span class="sc">|&gt;</span></span>
 <span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">width =</span> <span class="cn">Inf</span>) <span class="sc">|&gt;</span></span>
 <span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">&quot;roc_auc&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> learn_rate, <span class="at">y =</span> mean, <span class="at">color =</span> <span class="fu">factor</span>(tree_depth))) <span class="sc">+</span></span>
-<span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Learning Rate&quot;</span>, <span class="at">y =</span> <span class="st">&quot;CV AUC&quot;</span>) <span class="sc">+</span></span>
-<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> learn_rate, <span class="at">y =</span> mean, </span>
+<span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a>                       <span class="at">color =</span> <span class="fu">factor</span>(tree_depth))) <span class="sc">+</span></span>
+<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Learning Rate&quot;</span>, <span class="at">y =</span> <span class="st">&quot;CV AUC&quot;</span>) <span class="sc">+</span></span>
+<span id="cb73-9"><a href="#cb73-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 30 × 8
    tree_depth learn_rate .metric  .estimator  mean     n std_err
@@ -5001,10 +5014,10 @@ Computational engine: xgboost </code></pre>
 <li>Interpret the model</li>
 </ol>
 <p>First, the AUC of the final gradient boosting model is 0.6449823, meaning that the model can correctly classify 64.5% of the test set. The AUC is a measure of the ability of the model to distinguish between classes, and the AUC value ranges from 0 to 1, with 0.5 indicating random guessing and 1 indicating perfect classification. Therefore, the AUC of the final gradient boosting model is higher than the AUC of the final random forest model. Also, the accuracy of the final gradient boosting model is 0.6045476, which means that the model can correctly predict 60.5% of the test set.</p>
-<p>Second, the variable importance plot shows that there are 10 predictors in the top 10 important predictors, and the most important predictor is the temperature in Fahrenheit. And the second important predictor is the systolic non invasive blood pressure, which is consistent with the random forest model.</p>
-<ol start="4" type="1">
-<li>Compare model classification performance on the test set. Report both the area under ROC curve and accuracy for each machine learning algorithm and the model stacking. Interpret the results. What are the most important features in predicting long ICU stays? How do the models compare in terms of performance and interpretability?</li>
-</ol>
+<p>Second, the variable importance plot shows that the top 10 important predictors, and the most important predictor is the temperature in Fahrenheit. And the second important predictor is the systolic non invasive blood pressure, which is consistent with the random forest model.</p>
+<ul>
+<li><strong><em>Compare model classification performance on the test set. Report both the area under ROC curve and accuracy for each machine learning algorithm and the model stacking. Interpret the results. What are the most important features in predicting long ICU stays? How do the models compare in terms of performance and interpretability?</em></strong></li>
+</ul>
 </section>
 <section id="model-comparison" class="level3">
 <h3 class="anchored" data-anchor-id="model-comparison">Model comparison</h3>
@@ -5248,17 +5261,18 @@ Computational engine: xgboost </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb107"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb107-1"><a href="#cb107-1" aria-hidden="true" tabindex="-1"></a><span class="co"># compute the accuracy of the final classification</span></span>
 <span id="cb107-2"><a href="#cb107-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb107-3"><a href="#cb107-3" aria-hidden="true" tabindex="-1"></a><span class="co"># First, convert the predicted probabilities to predicted classes</span></span>
-<span id="cb107-4"><a href="#cb107-4" aria-hidden="true" tabindex="-1"></a>final_classification <span class="ot">&lt;-</span> final_classification <span class="sc">|&gt;</span></span>
-<span id="cb107-5"><a href="#cb107-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">.pred_class =</span> <span class="fu">as.factor</span>(</span>
-<span id="cb107-6"><a href="#cb107-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ifelse</span>(.pred_TRUE <span class="sc">&gt;</span> .pred_FALSE, <span class="st">&quot;TRUE&quot;</span>, <span class="st">&quot;FALSE&quot;</span>)))</span>
-<span id="cb107-7"><a href="#cb107-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb107-8"><a href="#cb107-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Then, compute the accuracy</span></span>
-<span id="cb107-9"><a href="#cb107-9" aria-hidden="true" tabindex="-1"></a>yardstick<span class="sc">::</span><span class="fu">accuracy</span>(</span>
-<span id="cb107-10"><a href="#cb107-10" aria-hidden="true" tabindex="-1"></a>  final_classification,</span>
-<span id="cb107-11"><a href="#cb107-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">truth =</span> los_long,</span>
-<span id="cb107-12"><a href="#cb107-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">estimate =</span> .pred_class</span>
-<span id="cb107-13"><a href="#cb107-13" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb107-3"><a href="#cb107-3" aria-hidden="true" tabindex="-1"></a><span class="co"># First, convert the predicted probabilities to </span></span>
+<span id="cb107-4"><a href="#cb107-4" aria-hidden="true" tabindex="-1"></a><span class="co"># predicted classes</span></span>
+<span id="cb107-5"><a href="#cb107-5" aria-hidden="true" tabindex="-1"></a>final_classification <span class="ot">&lt;-</span> final_classification <span class="sc">|&gt;</span></span>
+<span id="cb107-6"><a href="#cb107-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">.pred_class =</span> <span class="fu">as.factor</span>(</span>
+<span id="cb107-7"><a href="#cb107-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ifelse</span>(.pred_TRUE <span class="sc">&gt;</span> .pred_FALSE, <span class="st">&quot;TRUE&quot;</span>, <span class="st">&quot;FALSE&quot;</span>)))</span>
+<span id="cb107-8"><a href="#cb107-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb107-9"><a href="#cb107-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Then, compute the accuracy</span></span>
+<span id="cb107-10"><a href="#cb107-10" aria-hidden="true" tabindex="-1"></a>yardstick<span class="sc">::</span><span class="fu">accuracy</span>(</span>
+<span id="cb107-11"><a href="#cb107-11" aria-hidden="true" tabindex="-1"></a>  final_classification,</span>
+<span id="cb107-12"><a href="#cb107-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">truth =</span> los_long,</span>
+<span id="cb107-13"><a href="#cb107-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">estimate =</span> .pred_class</span>
+<span id="cb107-14"><a href="#cb107-14" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1 × 3
   .metric  .estimator .estimate
@@ -5346,8 +5360,9 @@ Computational engine: xgboost </code></pre>
 16        1 .pred_class_rf_fit_1_15     0.604</code></pre>
 </div>
 </div>
-<section id="interpret-the-results" class="level4">
-<h4 class="anchored" data-anchor-id="interpret-the-results">Interpret the results</h4>
+<section id="report-auc-and-accuracy-and-interpret-the-results" class="level4">
+<h4 class="anchored" data-anchor-id="report-auc-and-accuracy-and-interpret-the-results">Report AUC and accuracy and interpret the results</h4>
+<p>The gradient boosting model has the highest AUC (0.6449823) and accuracy (0.6045476) on the test set. The logistic regression model has the lowest AUC (0.6065411) and accuracy (0.5776284). The random forest model has an AUC of 0.6437507 and accuracy of 0.6041103. Therefore, the gradient boosting model is the best-performing model among the three.</p>
 <p>From the output of each model’s performance, we can see that the gradient boosting model has the greatest weight in the stacked ensemble. The random forest model has the second greatest weight, and the logistic regression model has the least weight.</p>
 <p>The final classification has an AUC of 0.6499224 and an accuracy of 0.6064606. The AUC of the final classification is 0.6499224, meaning that the probability of the model ranking a randomly chosen positive observation higher than a randomly chosen negative observation is 0.6499224. The accuracy of the final classification is 0.6064606, meaning that the proportion of correct predictions is 60.64606%.</p>
 <p>As for the coefficients of each model for the stacked ensemble, the boosting model has the greatest weight, and the random forest model has the second greatest weight. The logistic regression model has the least weight. In terms of the number of models, the random forest model has the greatest weight, and the logistic regression model has the least weight.</p>
@@ -5356,6 +5371,7 @@ Computational engine: xgboost </code></pre>
 </section>
 <section id="the-most-important-features" class="level4">
 <h4 class="anchored" data-anchor-id="the-most-important-features">The most important features</h4>
+<p><em>What are the most important features in predicting long ICU stays?</em></p>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb113"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb113-1"><a href="#cb113-1" aria-hidden="true" tabindex="-1"></a><span class="co"># retrieve the most important features</span></span>
 <span id="cb113-2"><a href="#cb113-2" aria-hidden="true" tabindex="-1"></a>logit_final_fit <span class="sc">|&gt;</span> </span>
@@ -5394,6 +5410,11 @@ Computational engine: xgboost </code></pre>
 </div>
 </div>
 <p>From the plots above, we can see that the most important features in different models are different. For the logistic regression model, the most important features are first careunit, heart rate, etc. And for the random forest model, the most important features are systolic non invasive blood pressure, heart rate, etc. And for the gradient boosting model, the most important features are temperature in farhenheit, systolic non invasive blood pressure, etc.</p>
+</section>
+<section id="performance-and-interpretability" class="level4">
+<h4 class="anchored" data-anchor-id="performance-and-interpretability">Performance and interpretability</h4>
+<p><em>How do the models compare in terms of performance and interpretability?</em></p>
+<p>Overall, in terms of performance, the random forest model has the best. In terms of interpretability, the logistic regression model has the best. The gradient boosting model is in the middle in terms of performance and interpretability.</p>
 </section>
 </section>
 </section>

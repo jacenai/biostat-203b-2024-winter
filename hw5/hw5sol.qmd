@@ -42,7 +42,7 @@ algorithms.
 
 ## Answer
 
-1.  ***Data preprocessing and feature engineering.***
+-   ***Data preprocessing and feature engineering.***
 
 ```{r}
 #| eval: true
@@ -133,14 +133,11 @@ mimic_icu_cohort |>
   tbl_summary()
 ```
 
-2.  ***Partition data into 50% training set and 50% test set. Stratify
+-   ***Partition data into 50% training set and 50% test set. Stratify
     partitioning according to `los_long`. For grading purpose, sort the
     data by `subject_id`, `hadm_id`, and `stay_id` and use the seed
     `203` for the initial data split. Below is the sample code.***
 
-```{=html}
-<!-- -->
-```
 (1) Partition data into 50% training set and 50% test set.
 
 ```{r}
@@ -205,7 +202,7 @@ recipe <- recipe(los_long ~ ., data = train_data) |>
   step_normalize(all_numeric_predictors()) 
 ```
 
-3.  ***Train and tune the models using the training set.***
+-   ***Train and tune the models using the training set.***
 
 ### Logistic regression with elastic net regularization
 
@@ -311,7 +308,8 @@ logit_fit |>
   collect_metrics() |>
   print(width = Inf) |>
   filter(.metric == "roc_auc") |>
-  ggplot(mapping = aes(x = penalty, y = mean, color = factor(mixture))) +
+  ggplot(mapping = aes(x = penalty, y = mean, 
+                       color = factor(mixture))) +
   geom_point() +
   labs(x = "Penalty", y = "CV AUC") +
   scale_x_log10()
@@ -395,8 +393,9 @@ predictors.
 ### Random forest
 
 First, define the model specification and the workflow for the random
-forest model. Then, tune the model using 5-fold cross-validation. (1)
-define the model specification
+forest model. Then, tune the model using 5-fold cross-validation.
+
+1.  define the model specification
 
 ```{r}
 #| eval: true
@@ -594,8 +593,9 @@ pressure.
 ### Boosting (XGBoost)
 
 First, define the model specification and the workflow for the boosting
-model. Then, tune the model using 5-fold cross-validation. (1) define
-the model specification
+model. Then, tune the model using 5-fold cross-validation.
+
+1.  define the model specification
 
 ```{r}
 #| eval: true
@@ -643,7 +643,8 @@ gb_workflow
 # set the tuning grid
 gb_param_grid <- grid_regular(
   
-  # try 3 different values for tree_depth, 5 different values for learn_rate
+  # try 3 different values for tree_depth, 
+  # 5 different values for learn_rate
   tree_depth(range = c(1L, 3L)),
   learn_rate(range = c(-5, 2), trans = log10_trans()),
   levels = c(3, 5)
@@ -701,7 +702,8 @@ gb_fit |>
   collect_metrics() |>
   print(width = Inf) |>
   filter(.metric == "roc_auc") |>
-  ggplot(mapping = aes(x = learn_rate, y = mean, color = factor(tree_depth))) +
+  ggplot(mapping = aes(x = learn_rate, y = mean, 
+                       color = factor(tree_depth))) +
   geom_point() +
   labs(x = "Learning Rate", y = "CV AUC") +
   scale_x_log10()
@@ -793,7 +795,7 @@ Fahrenheit. And the second important predictor is the systolic non
 invasive blood pressure, which is consistent with the random forest
 model.
 
-4.  ***Compare model classification performance on the test set. Report
+-   ***Compare model classification performance on the test set. Report
     both the area under ROC curve and accuracy for each machine learning
     algorithm and the model stacking. Interpret the results. What are
     the most important features in predicting long ICU stays? How do the
@@ -937,7 +939,8 @@ yardstick::roc_auc(
 
 # compute the accuracy of the final classification
 
-# First, convert the predicted probabilities to predicted classes
+# First, convert the predicted probabilities to 
+# predicted classes
 final_classification <- final_classification |>
   mutate(.pred_class = as.factor(
     ifelse(.pred_TRUE > .pred_FALSE, "TRUE", "FALSE")))
@@ -994,7 +997,13 @@ map(colnames(class_predictions),
   pivot_longer(c(everything(), -los_long))
 ```
 
-#### Interpret the results
+#### Report AUC and accuracy and interpret the results
+
+The gradient boosting model has the highest AUC (0.6449823) and accuracy
+(0.6045476) on the test set. The logistic regression model has the
+lowest AUC (0.6065411) and accuracy (0.5776284). The random forest model
+has an AUC of 0.6437507 and accuracy of 0.6041103. Therefore, the
+gradient boosting model is the best-performing model among the three.
 
 From the output of each model's performance, we can see that the
 gradient boosting model has the greatest weight in the stacked ensemble.
@@ -1030,6 +1039,8 @@ model has the second greatest accuracy.
 
 #### The most important features
 
+*What are the most important features in predicting long ICU stays?*
+
 ```{r}
 #| eval: true
 # retrieve the most important features
@@ -1057,3 +1068,13 @@ random forest model, the most important features are systolic non
 invasive blood pressure, heart rate, etc. And for the gradient boosting
 model, the most important features are temperature in farhenheit,
 systolic non invasive blood pressure, etc.
+
+#### Performance and interpretability
+
+*How do the models compare in terms of performance and
+interpretability?*
+
+Overall, in terms of performance, the random forest model has the best.
+In terms of interpretability, the logistic regression model has the
+best. The gradient boosting model is in the middle in terms of
+performance and interpretability.
