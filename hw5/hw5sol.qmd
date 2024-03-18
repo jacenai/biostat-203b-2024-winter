@@ -175,7 +175,7 @@ dim(test_data)
 #| eval: true
 
 # impute missing values
-logit_recipe <- recipe(los_long ~ ., data = train_data) |>
+recipe <- recipe(los_long ~ ., data = train_data) |>
   
   # For continuous variables, I use median to impute missing values
   step_impute_median(sodium, potassium, 
@@ -200,10 +200,7 @@ logit_recipe <- recipe(los_long ~ ., data = train_data) |>
   # center and scale numeric data 
   # to have a mean of 0 and a standard deviation of 1
   # so that the model can be trained more efficiently
-  step_normalize(all_numeric_predictors()) |>
-  
-  # High correlation filter to remove predictors with high correlation
-  step_corr(all_predictors(), threshold = 0.9)
+  step_normalize(all_numeric_predictors()) 
 ```
 
 3.  Train and tune the models using the training set.
@@ -214,6 +211,10 @@ First, define the model specification and the workflow for the logistic
 regression model. Then, tune the model using 5-fold cross-validation.
 
 1.  Define the model specification
+```{r}
+#| eval: true
+logit_recipe <- recipe
+```
 
 ```{r}
 #| eval: true
@@ -245,7 +246,7 @@ logit_workflow <- workflow() |>
 logit_param_grid <- grid_regular(
   penalty(range = c(-4, 1)), 
   mixture(),
-  levels = c(100, 5)
+  levels = c(50, 3)
   ) |>
   print()
 ```
@@ -366,6 +367,17 @@ logit_final_fit |>
   collect_metrics()
 ```
 
+```{r}
+#| eval: true
+
+logit_final_fit |>
+  extract_fit_engine() |>
+  vip::vip(num_features = 6) |>
+  print()
+  
+```
+
+
 ### Random forest
 
 First, define the model specification and the workflow for the random
@@ -374,7 +386,7 @@ forest model. Then, tune the model using 5-fold cross-validation.
 
 ```{r}
 #| eval: true
-rf_recipe <- logit_recipe
+rf_recipe <- recipe
 ```
 
 (2) define random forest model
@@ -392,7 +404,7 @@ rf_model <- rand_forest(
 ) |>
   
   # use the ranger package to do classification
-  set_engine("ranger") 
+  set_engine("ranger", importance = "impurity")
 
 rf_model
 ```
@@ -533,6 +545,14 @@ rf_final_fit |>
   collect_metrics()
 ```
 
+```{r}
+#| eval: true
+
+rf_final_fit |>
+  extract_fit_engine() |>
+  vip::vip() |>
+  print()
+```
 ### Boosting (XGBoost)
 
 First, define the model specification and the workflow for the boosting
@@ -541,7 +561,7 @@ model. Then, tune the model using 5-fold cross-validation.
 
 ```{r}
 #| eval: true
-gb_recipe <- logit_recipe
+gb_recipe <- recipe
 ```
 
 (2) define boosting model
@@ -834,6 +854,19 @@ yardstick::roc_auc(
   truth = los_long,
   contains(".pred_FALSE")
   )
+
+
+final_classification <- final_classification |>
+  mutate(.pred_class = as.factor(ifelse(.pred_TRUE > .pred_FALSE, "TRUE", "FALSE")))
+
+
+yardstick::accuracy(
+  final_classification,
+  truth = los_long,
+  estimate = .pred_class
+  )
+
+
 ```
 
 Use the members argument to generate predictions from each individual
@@ -887,6 +920,15 @@ higher than a randomly chosen negative observation is 0.6499.
 #### The most important features
 ```{r}
 #| eval: true
+logit_final_fit |> 
+  extract_fit_engine() |>
+  vip::vip(num_features = 6) |>
+  print()
+
+rf_final_fit |>
+  extract_fit_engine() |>
+  vip::vip(num_features = 6) |>
+  print()
 
 gb_final_fit |> 
   extract_fit_parsnip() |>
@@ -894,6 +936,8 @@ gb_final_fit |>
   vip::vip() |>
   print()
 
+
 ```
-From the plot above, it is clear that the most important features in predicting long ICU stays are the 
-following:
+From the plot above, it is clear that for 9
+the most important features in predicting long ICU stays are the 
+following: 
