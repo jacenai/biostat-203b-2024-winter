@@ -42,7 +42,7 @@ algorithms.
 
 ## Answer
 
-1.  Data preprocessing and feature engineering.
+1.  ***Data preprocessing and feature engineering.***
 
 ```{r}
 #| eval: true
@@ -73,39 +73,37 @@ variable.
 #| eval: true
 # Load "mimiciv_icu_cohort.rds" data
 mimic_icu_cohort <- read_rds("mimic_icu_cohort.rds") |>
-  select(-last_careunit,
-         -dod,
-         -discharge_location,
-         -hospital_expire_flag,
-         -los)
-
+  select(
+    -last_careunit,
+    -dod,
+    -discharge_location,
+    -hospital_expire_flag,
+    -los
+  )
 
 # Check missing values of the data
 colSums(is.na(mimic_icu_cohort))
 
+# Define a vector with the names of the continuous variables
+colnames <- c(
+  "sodium", "chloride", "creatinine",
+  "potassium", "glucose", "hematocrit",
+  "white_blood_cell_count", "bicarbonate",
+  "temperature_in_Fahrenheit", 
+  "diastolic_non_invasive_blood_pressure",
+  "systolic_non_invasive_blood_pressure",
+  "respiratory_rate", "heart_rate",
+  "age_intime"
+)
 
 # Check the distribution of each continuous variable
 # and I found that most of the continuous variables are right-skewed
 # so I decide to use median to impute missing values later
-hist_data <- lapply(mimic_icu_cohort[, c("sodium", "chloride", "creatinine",
-                           "potassium", "glucose", "hematocrit",
-                           "white_blood_cell_count", "bicarbonate",
-                           "temperature_in_Fahrenheit", 
-                           "diastolic_non_invasive_blood_pressure",
-                           "systolic_non_invasive_blood_pressure",
-                           "respiratory_rate", "heart_rate",
-                           "age_intime")], function(x) {
+hist_data <- lapply(mimic_icu_cohort[, colnames], function(x) {
   data.frame(value = x)
 })
 
-names(hist_data) <- c("sodium", "chloride", "creatinine",
-                           "potassium", "glucose", "hematocrit",
-                           "white_blood_cell_count", "bicarbonate",
-                           "temperature_in_Fahrenheit", 
-                           "diastolic_non_invasive_blood_pressure",
-                           "systolic_non_invasive_blood_pressure",
-                           "respiratory_rate", "heart_rate",
-                           "age_intime")
+names(hist_data) <- colnames
 
 hist_data <- bind_rows(hist_data, .id = "variable")
 
@@ -115,33 +113,34 @@ ggplot(hist_data, aes(x = value)) +
   labs(x = "Value") +
   theme_minimal()
 
-
 # Deal with categorical variables
 mimic_icu_cohort <- mimic_icu_cohort |>
   
   # For categorical variables "marital_status", 
   # I use a new category "Unknown" to get rid of missing values
-  mutate(marital_status = 
-           ifelse(is.na(marital_status), "Unknown", marital_status)) |>
+  mutate(
+    marital_status = ifelse(
+      is.na(marital_status), "Unknown", marital_status)
+  ) |>
   
-  # Make the categorical variables as factors to make it easier for modeling
-  mutate(marital_status = 
-           as.factor(marital_status)) |>
+  # Make the categorical variables as factors 
+  # to make it easier for modeling
+  mutate(marital_status = as.factor(marital_status)) |>
   mutate(los_long = as.factor(los_long))
-
 
 # summarize the data
 mimic_icu_cohort |>
   tbl_summary()
 ```
 
-2.  Partition data into 50% training set and 50% test set. Stratify
+2.  ***Partition data into 50% training set and 50% test set. Stratify
     partitioning according to `los_long`. For grading purpose, sort the
     data by `subject_id`, `hadm_id`, and `stay_id` and use the seed
-    `203` for the initial data split. Below is the sample code.
+    `203` for the initial data split. Below is the sample code.***
 
+```{=html}
 <!-- -->
-
+```
 (1) Partition data into 50% training set and 50% test set.
 
 ```{r}
@@ -206,7 +205,7 @@ recipe <- recipe(los_long ~ ., data = train_data) |>
   step_normalize(all_numeric_predictors()) 
 ```
 
-3.  Train and tune the models using the training set.
+3.  ***Train and tune the models using the training set.***
 
 ### Logistic regression with elastic net regularization
 
@@ -217,6 +216,7 @@ regression model. Then, tune the model using 5-fold cross-validation.
 
 ```{r}
 #| eval: true
+# define the recipe
 logit_recipe <- recipe
 ```
 
@@ -388,9 +388,9 @@ AUC of the final logistic regression model is not very high. Also, the
 accuracy of the final logistic regression model is 0.5777924, which
 means that the model can only correctly predict 57.8% of the test set.
 
-The variable importance plot shows that there are 10 predictors in the
-top 10 important predictors, and the most important predictors are the
-first care unit are important predictors.
+The variable importance plot shows the top 10 important predictors, and
+the most important predictor is the first care unit are important
+predictors.
 
 ### Random forest
 
@@ -400,6 +400,7 @@ define the model specification
 
 ```{r}
 #| eval: true
+# define the recipe
 rf_recipe <- recipe
 ```
 
@@ -500,7 +501,8 @@ rf_fit |>
   collect_metrics() |>
   print(width = Inf) |>
   filter(.metric == "roc_auc") |>
-  ggplot(mapping = aes(x = trees, y = mean, color = factor(mtry))) +
+  ggplot(mapping = aes(x = trees, y = mean, 
+                       color = factor(mtry))) +
   geom_point() +
   labs(x = "Num. of Trees", y = "CV AUC")
 ```
@@ -585,9 +587,9 @@ logistic regression model. Also, the accuracy of the final random forest
 model is 0.6041103, which means that the model can correctly predict
 60.4% of the test set.
 
-The variable importance plot shows that there are 10 predictors in the
-top 10 important predictors, and the most important predictor is the
-systolic non invasive blood pressure.
+The variable importance plot shows that the top 10 important predictors,
+and the most important predictor is the systolic non invasive blood
+pressure.
 
 ### Boosting (XGBoost)
 
@@ -597,6 +599,7 @@ the model specification
 
 ```{r}
 #| eval: true
+# define the recipe
 gb_recipe <- recipe
 ```
 
@@ -784,17 +787,17 @@ final random forest model. Also, the accuracy of the final gradient
 boosting model is 0.6045476, which means that the model can correctly
 predict 60.5% of the test set.
 
-Second, the variable importance plot shows that there are 10 predictors
-in the top 10 important predictors, and the most important predictor is
-the temperature in Fahrenheit. And the second important predictor is the
-systolic non invasive blood pressure, which is consistent with the
-random forest model.
+Second, the variable importance plot shows that the top 10 important
+predictors, and the most important predictor is the temperature in
+Fahrenheit. And the second important predictor is the systolic non
+invasive blood pressure, which is consistent with the random forest
+model.
 
-4.  Compare model classification performance on the test set. Report
+4.  ***Compare model classification performance on the test set. Report
     both the area under ROC curve and accuracy for each machine learning
     algorithm and the model stacking. Interpret the results. What are
     the most important features in predicting long ICU stays? How do the
-    models compare in terms of performance and interpretability?
+    models compare in terms of performance and interpretability?***
 
 ### Model comparison
 
@@ -898,6 +901,7 @@ collect_parameters(model_st, "logit_fit")
 ### Final classification
 
 Apply the model on the test data and output the final classification
+
 ```{r}
 #| eval: true
 if (file.exists("final_classification.rds")) {
@@ -972,7 +976,9 @@ if (file.exists("class_predictions.rds")) {
   write_rds("class_predictions.rds")
 }
 ```
+
 Get the value of each model's performance
+
 ```{r}
 #| eval: true
 # set the factor columns to character for comparison
@@ -990,18 +996,37 @@ map(colnames(class_predictions),
 
 #### Interpret the results
 
-From the output of each model's performance, we can see that the gradient boosting
-model has the greatest weight in the stacked ensemble. The random forest
-model has the second greatest weight, and the logistic regression model
-has the least weight. 
+From the output of each model's performance, we can see that the
+gradient boosting model has the greatest weight in the stacked ensemble.
+The random forest model has the second greatest weight, and the logistic
+regression model has the least weight.
 
-The final classification has an AUC of 0.6499224 and an accuracy of 0.6064606. The AUC of the final classification is 0.6499224, meaning that the probability of the model ranking a randomly chosen positive observation higher than a randomly chosen negative observation is 0.6499224. The accuracy of the final classification is 0.6064606, meaning that the proportion of correct predictions is 60.64606%.
+The final classification has an AUC of 0.6499224 and an accuracy of
+0.6064606. The AUC of the final classification is 0.6499224, meaning
+that the probability of the model ranking a randomly chosen positive
+observation higher than a randomly chosen negative observation is
+0.6499224. The accuracy of the final classification is 0.6064606,
+meaning that the proportion of correct predictions is 60.64606%.
 
-As for the coefficients of each model for the stacked ensemble, the boosting model has the greatest weight, and the random forest model has the second greatest weight. The logistic regression model has the least weight. In terms of the number of models, the random forest model has the greatest weight, and the logistic regression model has the least weight.
+As for the coefficients of each model for the stacked ensemble, the
+boosting model has the greatest weight, and the random forest model has
+the second greatest weight. The logistic regression model has the least
+weight. In terms of the number of models, the random forest model has
+the greatest weight, and the logistic regression model has the least
+weight.
 
-From the output of accuracy of each model, we can see that the random forest model has the greatest accuracy, and the logistic regression model has the least accuracy. The gradient boosting model has the second greatest accuracy.
+From the output of accuracy of each model, we can see that the random
+forest model has the greatest accuracy, and the logistic regression
+model has the least accuracy. The gradient boosting model has the second
+greatest accuracy.
 
-In conclusion, the gradient boosting model has the greatest weight in the stacked ensemble, and the random forest model has the second greatest weight. The logistic regression model has the least weight. The final classification has an AUC of 0.6499224 and an accuracy of 0.6064606. The random forest model has the greatest accuracy, and the logistic regression model has the least accuracy. The gradient boosting model has the second greatest accuracy.
+In conclusion, the gradient boosting model has the greatest weight in
+the stacked ensemble, and the random forest model has the second
+greatest weight. The logistic regression model has the least weight. The
+final classification has an AUC of 0.6499224 and an accuracy of
+0.6064606. The random forest model has the greatest accuracy, and the
+logistic regression model has the least accuracy. The gradient boosting
+model has the second greatest accuracy.
 
 #### The most important features
 
@@ -1025,4 +1050,10 @@ gb_final_fit |>
   print()
 ```
 
-From the plots above, we can see that the most important features in different models are different. For the logistic regression model, the most important features are first careunit, heart rate, etc. And for the random forest model, the most important features are systolic non invasive blood pressure, heart rate, etc. And for the gradient boosting model, the most important features are temperature in farhenheit, systolic non invasive blood pressure, etc.
+From the plots above, we can see that the most important features in
+different models are different. For the logistic regression model, the
+most important features are first careunit, heart rate, etc. And for the
+random forest model, the most important features are systolic non
+invasive blood pressure, heart rate, etc. And for the gradient boosting
+model, the most important features are temperature in farhenheit,
+systolic non invasive blood pressure, etc.
