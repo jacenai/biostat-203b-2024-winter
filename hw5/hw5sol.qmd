@@ -140,6 +140,8 @@ mimic_icu_cohort |>
     data by `subject_id`, `hadm_id`, and `stay_id` and use the seed
     `203` for the initial data split. Below is the sample code.
 
+<!-- -->
+
 (1) Partition data into 50% training set and 50% test set.
 
 ```{r}
@@ -169,6 +171,7 @@ dim(train_data)
 test_data <- testing(data_split)
 dim(test_data)
 ```
+
 (2) Pre-processing of data
 
 ```{r}
@@ -211,6 +214,7 @@ First, define the model specification and the workflow for the logistic
 regression model. Then, tune the model using 5-fold cross-validation.
 
 1.  Define the model specification
+
 ```{r}
 #| eval: true
 logit_recipe <- recipe
@@ -224,7 +228,8 @@ logit_model <- logistic_reg(
   mode = "classification",
   penalty = tune(),
   mixture = tune()) |>
-
+  
+  # set the engine to glmnet
   set_engine("glmnet", standardize = FALSE) |>
   print()
 ```
@@ -243,6 +248,7 @@ logit_workflow <- workflow() |>
 
 ```{r}
 #| eval: true
+# I try to tune the model using penalty, mixture, and levels
 logit_param_grid <- grid_regular(
   penalty(range = c(-4, 1)), 
   mixture(),
@@ -261,6 +267,7 @@ set.seed(203)
 
 # define the number of folds for cross-validation is 5
 logit_folds <- vfold_cv(train_data, v = 5)
+
 logit_folds
 
 ```
@@ -343,19 +350,11 @@ Fit on the whole training set, then predict on the test set
 
 ```{r}
 #| eval: true
-if (file.exists("logit_final_fit.rds")) {
-  logit_final_fit <- read_rds("logit_final_fit.rds")
-  logit_final_fit
-  
-} else {
-  logit_final_fit <- logit_final_workflow |>
-    last_fit(data_split)
-  
-  logit_final_fit |>
-    write_rds("logit_final_fit.rds")
-  
-  logit_final_fit
-}
+
+logit_final_fit <- logit_final_workflow |>
+  last_fit(data_split)
+
+logit_final_fit
 ```
 
 Output the test set predictions
@@ -367,22 +366,37 @@ logit_final_fit |>
   collect_metrics()
 ```
 
+Plot the variable importance
+
 ```{r}
 #| eval: true
-
+# plot the variable importance
 logit_final_fit |>
-  extract_fit_engine() |>
-  vip::vip(num_features = 6) |>
+  extract_fit_parsnip() |>
+  vip::vip() |>
   print()
-  
 ```
 
+(7) Interpret the model
+
+First, the AUC of the final logistic regression model is 0.6064933,
+meaning that the model can correctly classify 60.6% of the test set. The
+AUC is a measure of the ability of the model to distinguish between
+classes, and the AUC value ranges from 0 to 1, with 0.5 indicating
+random guessing and 1 indicating perfect classification. Therefore, the
+AUC of the final logistic regression model is not very high. Also, the
+accuracy of the final logistic regression model is 0.5777924, which
+means that the model can only correctly predict 57.8% of the test set.
+
+The variable importance plot shows that there are 10 predictors in the
+top 10 important predictors, and the most important predictors are the
+first care unit are important predictors.
 
 ### Random forest
 
 First, define the model specification and the workflow for the random
-forest model. Then, tune the model using 5-fold cross-validation. 
-(1) define the model specification
+forest model. Then, tune the model using 5-fold cross-validation. (1)
+define the model specification
 
 ```{r}
 #| eval: true
@@ -456,6 +470,7 @@ Fit cross-validated models
 if (file.exists("rf_fit.rds")) {
   rf_fit <- read_rds("rf_fit.rds")
   rf_fit
+  
 } else {
   (rf_fit <- rf_workflow |>
     tune_grid(
@@ -527,6 +542,8 @@ if (file.exists("rf_final_fit.rds")) {
   rf_final_fit
   
 } else {
+  
+  # fit the final model on the whole training set
   rf_final_fit <- rf_final_workflow |>
     last_fit(data_split)
   
@@ -545,19 +562,38 @@ rf_final_fit |>
   collect_metrics()
 ```
 
+Predictor importance
+
 ```{r}
 #| eval: true
-
+# plot the variable importance 
 rf_final_fit |>
   extract_fit_engine() |>
   vip::vip() |>
   print()
 ```
+
+(8) Interpret the model
+
+First, the AUC of the final random forest model is 0.6437507, meaning
+that the model can correctly classify 64.4% of the test set. The AUC is
+a measure of the ability of the model to distinguish between classes,
+and the AUC value ranges from 0 to 1, with 0.5 indicating random
+guessing and 1 indicating perfect classification. Therefore, the AUC of
+the final random forest model is higher than the AUC of the final
+logistic regression model. Also, the accuracy of the final random forest
+model is 0.6041103, which means that the model can correctly predict
+60.4% of the test set.
+
+The variable importance plot shows that there are 10 predictors in the
+top 10 important predictors, and the most important predictor is the
+systolic non invasive blood pressure.
+
 ### Boosting (XGBoost)
 
 First, define the model specification and the workflow for the boosting
-model. Then, tune the model using 5-fold cross-validation. 
-(1) define the model specification 
+model. Then, tune the model using 5-fold cross-validation. (1) define
+the model specification
 
 ```{r}
 #| eval: true
@@ -632,6 +668,7 @@ Fit cross-validated models
 if (file.exists("gb_fit.rds")) {
   gb_fit <- read_rds("gb_fit.rds")
   gb_fit
+  
 } else {
   (gb_fit <- gb_workflow |>
     tune_grid(
@@ -703,6 +740,8 @@ if (file.exists("gb_final_fit.rds")) {
   gb_final_fit
   
 } else {
+  
+  # fit the final model on the whole training set
   gb_final_fit <- gb_final_workflow |>
     last_fit(data_split)
   
@@ -721,6 +760,35 @@ Output the test set predictions
 gb_final_fit |> 
   collect_metrics()
 ```
+
+Predictor importance
+
+```{r}
+#| eval: true
+# plot the variable importance
+gb_final_fit |>
+  extract_fit_engine() |>
+  vip::vip() |>
+  print()
+```
+
+(8) Interpret the model
+
+First, the AUC of the final gradient boosting model is 0.6449823,
+meaning that the model can correctly classify 64.5% of the test set. The
+AUC is a measure of the ability of the model to distinguish between
+classes, and the AUC value ranges from 0 to 1, with 0.5 indicating
+random guessing and 1 indicating perfect classification. Therefore, the
+AUC of the final gradient boosting model is higher than the AUC of the
+final random forest model. Also, the accuracy of the final gradient
+boosting model is 0.6045476, which means that the model can correctly
+predict 60.5% of the test set.
+
+Second, the variable importance plot shows that there are 10 predictors
+in the top 10 important predictors, and the most important predictor is
+the temperature in Fahrenheit. And the second important predictor is the
+systolic non invasive blood pressure, which is consistent with the
+random forest model.
 
 4.  Compare model classification performance on the test set. Report
     both the area under ROC curve and accuracy for each machine learning
@@ -779,8 +847,7 @@ if (file.exists("stacks.rds")) {
     # fit the candidates with nonzero stacking coefficients
     fit_members()
   
-  model_st |>
-    write_rds("stacks.rds")
+  model_st |> write_rds("stacks.rds")
   
   model_st
 }
@@ -830,42 +897,53 @@ collect_parameters(model_st, "logit_fit")
 
 ### Final classification
 
+Apply the model on the test data and output the final classification
 ```{r}
 #| eval: true
 if (file.exists("final_classification.rds")) {
   final_classification <- read_rds("final_classification.rds")
+  
   final_classification
+  
 } else {
   final_classification <- test_data |>
+    
+    # apply the model on the test data 
+    # with type = "prob" to get the predicted probabilities
     bind_cols(predict(model_st, test_data, type = "prob")) |>
     print(width = Inf)
+  
+  final_classification
+  
   final_classification |>
     write_rds("final_classification.rds")
-  final_classification
 }
 ```
 
-Compute the ROC AUC for the model
+Compute the ROC AUC and accuracy of the final classification
 
 ```{r}
 #| eval: true
+# compute the ROC AUC of the final classification
 yardstick::roc_auc(
   final_classification,
   truth = los_long,
   contains(".pred_FALSE")
   )
 
+# compute the accuracy of the final classification
 
+# First, convert the predicted probabilities to predicted classes
 final_classification <- final_classification |>
-  mutate(.pred_class = as.factor(ifelse(.pred_TRUE > .pred_FALSE, "TRUE", "FALSE")))
+  mutate(.pred_class = as.factor(
+    ifelse(.pred_TRUE > .pred_FALSE, "TRUE", "FALSE")))
 
-
+# Then, compute the accuracy
 yardstick::accuracy(
   final_classification,
   truth = los_long,
   estimate = .pred_class
   )
-
 
 ```
 
@@ -875,59 +953,69 @@ Use the members argument to generate predictions from each individual
 #| eval: true
 if (file.exists("class_predictions.rds")) {
   class_predictions <- read_rds("class_predictions.rds")
+  
   class_predictions
 } else {
-class_predictions <- test_data |>
+  
+  class_predictions <- test_data |>
   select(los_long) |>
-  bind_cols(predict(model_st, 
+  
+    # apply the model on the test data
+    bind_cols(predict(model_st, 
                     test_data, 
                     type = "class", 
-                    members = TRUE
-                    ))
+                    members = TRUE))
+  
+  class_predictions
+  
   class_predictions |>
   write_rds("class_predictions.rds")
-class_predictions
 }
 ```
-
+Get the value of each model's performance
 ```{r}
 #| eval: true
-class_predictions <- class_predictions |>
+# set the factor columns to character for comparison
+class_predictions <- class_predictions |> 
   mutate(across(where(is.factor), as.character))
 
-map(
-  colnames(class_predictions),
-  ~ mean(class_predictions$los_long == 
-           pull(class_predictions, .x))
-  ) |>
-  set_names(colnames(class_predictions)) |>
-  as_tibble() |>
+# get the mean of the predicted classes for each model
+map(colnames(class_predictions), 
+    ~ mean(class_predictions$los_long == 
+             pull(class_predictions, .x))) |> 
+  set_names(colnames(class_predictions)) |> 
+  as_tibble() |> 
   pivot_longer(c(everything(), -los_long))
 ```
 
 #### Interpret the results
 
-Interpretations: 
-From the output, we can see that the gradient boosting model has the greatest weight in the stacked ensemble.
-The random forest model has the second greatest weight, and the logistic regression model has the least weight. 
-The stacked ensemble has an AUC of 0.6499, which is slightly higher than the AUC of the gradient boosting model. 
-Therefore, the stacked ensemble is the best-performing model among the four.
+From the output of each model's performance, we can see that the gradient boosting
+model has the greatest weight in the stacked ensemble. The random forest
+model has the second greatest weight, and the logistic regression model
+has the least weight. 
 
-The AUC of the stacked ensemble is 0.6499, meaning that 
-the probability of the model ranking a randomly chosen positive observation 
-higher than a randomly chosen negative observation is 0.6499. 
+The final classification has an AUC of 0.6499224 and an accuracy of 0.6064606. The AUC of the final classification is 0.6499224, meaning that the probability of the model ranking a randomly chosen positive observation higher than a randomly chosen negative observation is 0.6499224. The accuracy of the final classification is 0.6064606, meaning that the proportion of correct predictions is 60.64606%.
+
+As for the coefficients of each model for the stacked ensemble, the boosting model has the greatest weight, and the random forest model has the second greatest weight. The logistic regression model has the least weight. In terms of the number of models, the random forest model has the greatest weight, and the logistic regression model has the least weight.
+
+From the output of accuracy of each model, we can see that the random forest model has the greatest accuracy, and the logistic regression model has the least accuracy. The gradient boosting model has the second greatest accuracy.
+
+In conclusion, the gradient boosting model has the greatest weight in the stacked ensemble, and the random forest model has the second greatest weight. The logistic regression model has the least weight. The final classification has an AUC of 0.6499224 and an accuracy of 0.6064606. The random forest model has the greatest accuracy, and the logistic regression model has the least accuracy. The gradient boosting model has the second greatest accuracy.
 
 #### The most important features
+
 ```{r}
 #| eval: true
+# retrieve the most important features
 logit_final_fit |> 
   extract_fit_engine() |>
-  vip::vip(num_features = 6) |>
+  vip::vip() |>
   print()
 
 rf_final_fit |>
   extract_fit_engine() |>
-  vip::vip(num_features = 6) |>
+  vip::vip() |>
   print()
 
 gb_final_fit |> 
@@ -935,9 +1023,6 @@ gb_final_fit |>
   pluck("fit") |>
   vip::vip() |>
   print()
-
-
 ```
-From the plot above, it is clear that for 9
-the most important features in predicting long ICU stays are the 
-following: 
+
+From the plots above, we can see that the most important features in different models are different. For the logistic regression model, the most important features are first careunit, heart rate, etc. And for the random forest model, the most important features are systolic non invasive blood pressure, heart rate, etc. And for the gradient boosting model, the most important features are temperature in farhenheit, systolic non invasive blood pressure, etc.
