@@ -3105,8 +3105,8 @@ vertical-align: -.125em;
 
 <p>The Shiny app is a web application that allows users to interact with the MIMIC-IV ICU cohort data. The app provides two main functionalities:</p>
 <ol type="1">
-<li><p><strong>Patient’s Summary Information</strong>: Users can select the type of summary information they want to view (Demographics, Lab Measurements, or Vitals) and then select the specific information they want to display (e.g., age</p></li>
-<li><p><strong>Patient’s ADT &amp; ICU Stay Information</strong>: Users can enter a patient’s ID and view the patient’s admission, discharge, and transfer (ADT) information, as well as their ICU stay information.</p></li>
+<li><p><strong>Patient’s Summary Information</strong>: Users can select the type of summary information they want to view (Demographics, Lab Measurements, or Vitals) and then select the specific information they want to display (e.g., age, gender, heart rate, blood pressure, etc.). The app will generate a summary table and a plot of the selected information.</p></li>
+<li><p><strong>Patient’s ADT &amp; ICU Stay Information</strong>: Users can enter a patient’s ID and view the patient’s admission, discharge, and transfer (ADT) information, as well as their ICU stay information. The app will display a timeline of the patient’s ADT events and ICU stay, as well as a summary table of the patient’s ICU stay.</p></li>
 </ol>
 <p>The app is built using the Shiny package in R, which allows for the creation of interactive web applications directly from R code. The app connects to the MIMIC-IV database using the <code>bigrquery</code> package and retrieves the necessary data for display.</p>
 <p>However, the app is not fully functional in this static environment, as it requires a live connection to the MIMIC-IV database to retrieve the data. To run the app and interact with the data, you can copy the code below and run it in your local R environment or on a Shiny server. And you will need to have access to the <code>BigQuery MIMIC-IV database</code> to retrieve the data.</p>
@@ -3143,7 +3143,7 @@ loaded via a namespace (and not attached):
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>memuse<span class="sc">::</span><span class="fu">Sys.meminfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Totalram:    8.000 GiB 
-Freeram:   150.922 MiB </code></pre>
+Freeram:   109.656 MiB </code></pre>
 </div>
 </div>
 <p>R Shiny App for MIMIC-IV ICU Cohort:</p>
